@@ -17,10 +17,15 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.jakewharton.threetenabp.AndroidThreeTen
+import org.threeten.bp.LocalTime
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.PrintWriter
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter.ofPattern
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -39,10 +44,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AndroidThreeTen.init(this)
         setContentView(R.layout.activity_main)
 
         // Checking permissions
-
+        //TODO change external to internal storage
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                 arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1);
@@ -82,6 +88,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         val btn_stt = findViewById<Button>(R.id.recordButton)
+        /**
+         * Getting user input and starting decision finding process
+         * */
 
         btn_stt.setOnClickListener {
             val sttIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
@@ -114,7 +123,8 @@ class MainActivity : AppCompatActivity() {
                     result?.let {
                         val recognizedText = it[0]
                         textbox.setText(recognizedText)
-                        writeLog(recognizedText)
+                        writeLog(recognizedText, 1)
+                        getCommand(recognizedText)
                     }
                 }
             }
@@ -131,9 +141,24 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    //TODO add string type
-    private fun writeLog(text: String) {
-
+    /**
+     * This function writes data into a log file
+     * Format: YYYY-MM-DDTH:M:S:MS-sender-Content
+     * YYYY: Year
+     * MM: Month
+     * DD: Day
+     * H: Hour
+     * M: Minute
+     * S: Second
+     * MS: Millisecond
+     * Sender: User/System
+     * Content: User input / System actions/output
+     * Input values:
+     * text: Message to add to the log
+     * sender: Sender of this message (User: 1, System: 0)
+     */
+    private fun writeLog(text: String, sender: Int) {
+        //TODO change to internal storage
         val sd_main = File(Environment.getExternalStorageDirectory(), "test")
         var success = true
         if (!sd_main.exists())
@@ -141,12 +166,19 @@ class MainActivity : AppCompatActivity() {
 
         if (success) {
             //directory exists or already created
-            val sd = File("voice_log.txt")
-            Log.e("DEBUG","Ordner erstellt/existiert")
+            //val sd = File("voice_log.txt")
+            //Log.e("DEBUG","Ordner erstellt/existiert")
             val dest = File(sd_main, "voice_log.txt")
-            println("Pfad: " + dest.path)
+            //println("Pfad: " + dest.path)
+            //Get current time and date for the log
+            val currentTimeAndDate = org.threeten.bp.LocalDateTime.now()
+            var sndr = "USR"
+            if (sender == 0) {
+                sndr = "SYS"
+            }
+
             try {
-                dest.appendText(text + "\n")
+                dest.appendText("$currentTimeAndDate-$sndr:$text\n")
             } catch (e: Exception) {
                 //TODO handle exception
             }
@@ -157,6 +189,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun readLog() {
+        //TODO change to internal storage
         val sd_main = File(Environment.getExternalStorageDirectory(), "test")
         var success = true
         if (!sd_main.exists())
@@ -164,11 +197,18 @@ class MainActivity : AppCompatActivity() {
 
         if (success) {
             val sd = File(sd_main, "voice_log.txt")
-            println("Path in read: " + sd.path)
+            //println("Path in read: " + sd.path)
             val lineList = mutableListOf<String>()
             sd.useLines { lines -> lines.forEach { lineList.add(it) } }
             lineList.forEach {println("DEBUG: " + it)}
 
         }
+    }
+
+    private fun getCommand(text: String) {
+        if(text.contains("Termin") && text.contains("erstelle")) {
+            println("Create appointment")
+        }
+
     }
 }
