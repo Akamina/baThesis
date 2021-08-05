@@ -124,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                         val recognizedText = it[0]
                         textbox.setText(recognizedText)
                         writeLog(recognizedText, 1)
-                        getCommand(recognizedText)
+                        handleInput(recognizedText)
                     }
                 }
             }
@@ -205,10 +205,90 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getCommand(text: String) {
-        if(text.contains("Termin") && text.contains("erstelle")) {
-            println("Create appointment")
+    /**
+     *This function determines the command that will be performed e.g. create or edit etc.
+     **/
+    private fun getCommand(text: String): String {
+        //Create appointment
+        //Create reminder
+        //Create list
+        //Edit appointment
+        //Edit reminder
+        //Edit list
+        //Delete appointment
+        //Delete reminder
+        //Delete list
+        //Read appointment
+        //Read reminder
+        //Read list
+        //TODO: add lists of words and synonyms to compare here
+        if (text.contains("erstelle")) {
+            //erinnere mich soll auch diesen Fall auslösen
+            return "create"
         }
+        if (text.contains("lösche")) {
+            return "delete"
+        }
+        if (text.contains("bearbeite")) {
+            return "edit"
+        }
+        if (text.contains("lies")) {
+            return "read"
+        }
+        return "error"
+    }
 
+    /**
+     * This function determines the target of a command. Appointment or reminder or list
+     **/
+    //TODO: compare index of reminder and appointment so create an appointment with the name reminder is still an appointment and not a reminder
+    private fun getTarget(text: String): String {
+        if (text.contains("Liste")) {
+            return "list"
+        }
+        if (text.contains("Erinnerung")) {
+            return "reminder"
+        }
+        if (text.contains("Termin")) {
+            return "appointment"
+        }
+        return "error"
+    }
+
+    /**
+     * This function handles user input and calls functions to perform the users intend
+     **/
+
+    private fun handleInput(text: String) {
+        val command = getCommand(text)
+        val target = getTarget(text)
+
+        when (command) {
+            "create" -> when (target) {
+                "appointment" -> println("$command $target")
+                "reminder" -> println("$command $target")
+                "list" -> println("$command $target")
+                else -> { println("Ziel nicht verstanden")}
+            }
+            "edit" -> when (target) {
+                "appointment" -> println("$command $target")
+                "reminder" -> println("$command $target")
+                "list" -> println("$command $target")
+                else -> { println("Ziel nicht verstanden")}
+            }
+            "delete" -> when (target) {
+                "appointment" -> println("$command $target")
+                "reminder" -> println("$command $target")
+                "list" -> println("$command $target")
+                else -> { println("Ziel nicht verstanden")}
+            }
+            "read" -> when (target) {
+                "appointment" -> println("$command $target")
+                "reminder" -> println("$command $target")
+                "list" -> println("$command $target")
+                else -> { println("Ziel nicht verstanden")}
+            }
+            else -> { println("Kommando nicht verstanden")}
+        }
     }
 }
