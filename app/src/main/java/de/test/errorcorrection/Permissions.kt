@@ -15,16 +15,16 @@ object Permissions {
         //TODO change external to internal storage
         if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(mainActivity,
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1);
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
         }
 
         if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(mainActivity,
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1);
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
         }
 
         if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(mainActivity, arrayOf(Manifest.permission.CAMERA), 1);
+            ActivityCompat.requestPermissions(mainActivity, arrayOf(Manifest.permission.CAMERA), 1)
         }
     }
 }

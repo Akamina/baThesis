@@ -3,12 +3,10 @@ package de.test.errorcorrection
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.speech.RecognizerIntent
-import androidx.core.app.ActivityCompat.startActivityForResult
 import de.test.errorcorrection.MainActivity.Companion.REQUEST_CODE_STT
 import org.threeten.bp.LocalDate
 import org.threeten.bp.LocalTime
 import org.threeten.bp.format.DateTimeFormatter
-import java.sql.Time
 import java.util.*
 
 object Appointment {

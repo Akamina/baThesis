@@ -66,7 +66,7 @@ object Logger {
             //println("Path in read: " + sd.path)
             val lineList = mutableListOf<String>()
             sd.useLines { lines -> lines.forEach { lineList.add(it) } }
-            lineList.forEach {println("DEBUG: " + it)}
+            lineList.forEach {println("DEBUG: $it")}
 
         }
     }
