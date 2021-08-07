@@ -86,7 +86,6 @@ class Appointment {
         Thread.sleep(3000)
         //println(mainActivity.sem.queueLength)
         mainActivity.stt.getUserInput(mainActivity)
-        mainActivity.done = false
         //Thread.sleep(5000)
         //mainActivity.sem.acquire()
         println(mainActivity.sem.queueLength)
