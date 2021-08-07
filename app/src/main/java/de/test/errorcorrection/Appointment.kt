@@ -1,17 +1,9 @@
 package de.test.errorcorrection
 
-import android.app.Activity
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.os.Build
-import android.os.Bundle
-import android.speech.RecognizerIntent
-import android.speech.tts.TextToSpeech
 import android.widget.EditText
 import org.threeten.bp.LocalDate
 import org.threeten.bp.LocalTime
 import org.threeten.bp.format.DateTimeFormatter
-import java.util.*
 
 class Appointment {
 
@@ -24,14 +16,14 @@ class Appointment {
                 }
             })
     }*/
-    /*
-    lateinit internal var name: String
-    lateinit internal var date: String
-    lateinit internal var time: String
-    lateinit internal var location: String
+
+    lateinit private var name: String
+    lateinit private var date: String
+    lateinit private var time: String
+    lateinit private var location: String
 
 
-     */
+
 
     /**
      * This function starts the dialogue to create an appointment
@@ -40,6 +32,9 @@ class Appointment {
     internal fun createAppointment(mainActivity: MainActivity) {
 
         println("Erstelle Termin")
+        //mainActivity.stt.getUserInput(mainActivity, MainActivity.REQUEST_CODE_STT_NAME)
+        askName(mainActivity)
+    /*
         //askName(mainActivity)
         var name = askName(mainActivity)
         //askDate()
@@ -49,7 +44,8 @@ class Appointment {
         //askLocation()
         var location = askLocation()
 
-        println("test " +name)
+        */
+        //println("test " +name)
         /*
         val sttIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         sttIntent.putExtra(
@@ -79,16 +75,16 @@ class Appointment {
         val s = "Wie lautet der Name des Termins?"
 
 
-        mainActivity.sem.acquire()
-        mainActivity.askUser(s, mainActivity)
+        //mainActivity.sem.acquire()
+        mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_NAME)
         //sem to wait here
         //mainActivity.sem.acquire()
         Thread.sleep(3000)
         //println(mainActivity.sem.queueLength)
-        mainActivity.stt.getUserInput(mainActivity)
+       // mainActivity.stt.getUserInput(mainActivity, MainActivity.REQUEST_CODE_STT_NAME)
         //Thread.sleep(5000)
         //mainActivity.sem.acquire()
-        println(mainActivity.sem.queueLength)
+        //println(mainActivity.sem.queueLength)
         //var ret = mainActivity.findViewById<EditText>(R.id.et_text_input).getText().toString()
         //Thread.sleep(3000)
         /*
@@ -111,6 +107,21 @@ class Appointment {
         return "foo"
     }
 
+    internal fun setName(name: String) {
+        this.name = name
+    }
+
+    internal fun setDate(date: String) {
+        this.date = date
+    }
+
+    internal fun setTime(time: String) {
+        this.time = time
+    }
+
+    internal fun setLocation(location: String) {
+        this.location = location
+    }
 
 
 }

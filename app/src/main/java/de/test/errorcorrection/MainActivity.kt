@@ -1,26 +1,28 @@
 package de.test.errorcorrection
 
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import com.jakewharton.threetenabp.AndroidThreeTen
+import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.Semaphore
-import kotlin.concurrent.thread
 
 open class MainActivity : AppCompatActivity() {
     companion object {
         internal const val REQUEST_CODE_STT = 1
         internal const val REQUEST_CODE_STT_ANSWER = 2
+        internal const val REQUEST_CODE_STT_NAME = 3
+        internal const val REQUEST_CODE_STT_DATE = 4
+        internal const val REQUEST_CODE_STT_TIME = 5
+        internal const val REQUEST_CODE_STT_LOCATION = 6
     }
 
     internal val textToSpeechEngine: TextToSpeech by lazy {
@@ -31,11 +33,15 @@ open class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    lateinit internal var job: Job
+
     internal lateinit var logger: Logger
     internal lateinit var permissions: Permissions
     internal lateinit var handler: IntendHandler
     internal lateinit var stt: STT
     internal lateinit var tts : TTS
+    internal lateinit var appntmnt: Appointment
     internal val sem = Semaphore(1)
 
     /**
@@ -51,6 +57,7 @@ open class MainActivity : AppCompatActivity() {
         handler = IntendHandler()
         stt = STT()
         tts = TTS()
+        appntmnt = Appointment()
 
         // Checking permissions
         permissions.checkPermissions(this)
@@ -61,24 +68,13 @@ open class MainActivity : AppCompatActivity() {
 
         val textbox = findViewById<EditText>(R.id.et_text_input)
 
-        askUser("", this)
+        //askUser("", this, REQUEST_CODE_STT_NAME)
 
         btn_tts.setOnClickListener{
 
             val text = textbox.text.toString().trim()
             if (text.isNotEmpty()) {
-                /*
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1")
-
-                    //Logger.readLog()
-                } else {
-                    textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
-
-                    //Logger.readLog()
-
-                }*/
-                askUser(text, this)
+                askUser(text, this, REQUEST_CODE_STT_NAME)
             } else {
                 Toast.makeText(this, "Text cannot be empty", Toast.LENGTH_LONG).show()
             }
@@ -128,11 +124,67 @@ open class MainActivity : AppCompatActivity() {
                         val recognizedText = it[0]
                         textbox.setText(recognizedText)
                         logger.writeLog(recognizedText, 1)
-                        sem.release()
 
                     }
                 }
 
+            }
+            REQUEST_CODE_STT_NAME -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText)
+                        appntmnt.setName(recognizedText)
+                        askUser("An welchem Datum ist der Termin?", this, REQUEST_CODE_STT_DATE)
+
+                    }
+                }
+            }
+            REQUEST_CODE_STT_DATE -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText)
+                        appntmnt.setDate(recognizedText)
+                        askUser("Um welche Uhrzeit ist der Termin?", this, REQUEST_CODE_STT_TIME)
+
+                    }
+                }
+            }
+            REQUEST_CODE_STT_TIME -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText)
+                        appntmnt.setTime(recognizedText)
+                        askUser("Wo findet der Termin statt?", this, REQUEST_CODE_STT_LOCATION)
+
+                    }
+                }
+            }
+            REQUEST_CODE_STT_LOCATION -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText)
+                        appntmnt.setLocation(recognizedText)
+                        //askUser("An welchem Datum ist der Termin?", this, REQUEST_CODE_STT_DATE)
+
+                        //TODO call function to create event in calendar here
+                    }
+                }
             }
 
         }
@@ -154,52 +206,6 @@ open class MainActivity : AppCompatActivity() {
 
         super.onDestroy()
     }
-    /*
-    /**
-     * This method generates a String from users voice input
-     * @return User input
-     */
-    internal fun getUserInputMain(): String {
-        val sttIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-        sttIntent.putExtra(
-            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-        )
-        sttIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
-        sttIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now!")
-
-        try {
-            startActivityForResult(sttIntent, REQUEST_CODE_STT)
-        } catch (e: ActivityNotFoundException) {
-            e.printStackTrace()
-            Toast.makeText(this, "Your device does not support STT.", Toast.LENGTH_LONG).show()
-        }
-        return findViewById<EditText>(R.id.et_text_input).getText().toString()
-    } */
-
-    /*
-    /**
-     * This method generates a String from users voice input
-     * @return User input
-     */
-    internal fun getUserInput(): String {
-        val sttIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-        sttIntent.putExtra(
-            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-        )
-        sttIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
-        sttIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now!")
-
-
-        try {
-            startActivityForResult(sttIntent, REQUEST_CODE_STT)
-        } catch (e: ActivityNotFoundException) {
-            e.printStackTrace()
-            Toast.makeText(this, "Your device does not support STT.", Toast.LENGTH_LONG).show()
-        }
-        return findViewById<EditText>(R.id.et_text_input).getText().toString()
-    } */
 
 
     /**
@@ -207,53 +213,30 @@ open class MainActivity : AppCompatActivity() {
      *
      * @param text
      */
-    internal fun askUser(text: String, mainActivity: MainActivity) {
-        /*val textToSpeechEngine: TextToSpeech by lazy {
-            TextToSpeech(
-                mainActivity
-            ) { status ->
-                if (status == TextToSpeech.SUCCESS) {
-                    textToSpeechEngine.language = Locale.GERMANY
-                }
-            }
-        }*/
-
+    internal fun askUser(text: String, mainActivity: MainActivity, requestCode: Int) {
         val textbox = findViewById<EditText>(R.id.et_text_input)
         textbox.setText(text)
-
-        val text2 = textbox.text.toString().trim()
-        /*if (text.isNotEmpty()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1")
-
-                //Logger.readLog()
-            } else {
-                textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
-
-                //Logger.readLog()
-
-            }
-            //getUserInput()
-            //askUser(text, this)
-        } else {
-            Toast.makeText(this, "Text cannot be empty", Toast.LENGTH_LONG).show()
-        }*/
         val logger = Logger()
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mainActivity.textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1")
+        val job = GlobalScope.launch {
+            println("waiting in thread: ${Thread.currentThread().name}")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                mainActivity.textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1")
 
-            logger.writeLog(text, 0)
-            //Thread.sleep(3000)
-        } else {
-            mainActivity.textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+                logger.writeLog(text, 0)
+            } else {
+                mainActivity.textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
 
-            logger.writeLog(text, 0)
+                logger.writeLog(text, 0)
 
+            }
+            delay((text.length * 80).toLong())
         }
-
-        sem.release()
+        runBlocking {
+            job.join()
+        }
+        mainActivity.stt.getUserInput(mainActivity, requestCode)
 
     }
 
