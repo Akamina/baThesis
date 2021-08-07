@@ -1,4 +1,4 @@
 package de.test.errorcorrection
 
-object Reminder {
+class Reminder {
 }

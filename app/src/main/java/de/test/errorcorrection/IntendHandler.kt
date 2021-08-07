@@ -1,6 +1,6 @@
 package de.test.errorcorrection
 
-object IntendHandler {
+class IntendHandler {
 
     /**
      * This function determines the command that will be performed e.g. create or edit etc.
@@ -66,10 +66,11 @@ object IntendHandler {
     internal fun handleInput(text: String, mainActivity: MainActivity) {
         val command = getCommand(text)
         val target = getTarget(text)
+        val tmp = Appointment()
 
         when (command) {
             "create" -> when (target) {
-                "appointment" -> Appointment.createAppointment(mainActivity)//println("$command $target")
+                "appointment" -> tmp.createAppointment(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
                 else -> { println("Ziel nicht verstanden")}

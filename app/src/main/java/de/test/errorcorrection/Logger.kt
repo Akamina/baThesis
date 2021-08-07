@@ -4,7 +4,7 @@ import android.os.Environment
 import android.util.Log
 import java.io.File
 
-object Logger {
+class Logger {
     /**
      * This function writes a String into a log file.
      * Format: YYYY-MM-DDTH:M:S:MS-sender-Content

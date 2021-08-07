@@ -5,7 +5,7 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-object Permissions {
+class Permissions {
 
     /**
      * This function checks the needed permissions for this application
