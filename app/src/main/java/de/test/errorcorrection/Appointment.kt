@@ -3,7 +3,6 @@ package de.test.errorcorrection
 import android.content.ContentValues
 import android.net.Uri
 import android.provider.CalendarContract
-import android.widget.EditText
 import org.threeten.bp.format.DateTimeFormatter
 import android.os.Build
 import org.threeten.bp.*
@@ -34,13 +33,12 @@ class Appointment {
 
         //Select default calendar
         event.put(CalendarContract.Events.CALENDAR_ID, 1)
+        val tm = getDateTimeFromString(date, time).toInstant(OffsetDateTime.now().offset).toEpochMilli()
 
         //Add data and details to event
         event.put(CalendarContract.Events.TITLE, name)
-        //event.put(CalendarContract.Events.DTSTART, System.currentTimeMillis())
-        //event.put(CalendarContract.Events.DTSTART,getDateTimeFromString(date, time).toEpochSecond(ZoneOffset.UTC))
-        event.put(CalendarContract.Events.DTSTART,getDateTimeFromString(date, time).toEpochSecond(OffsetDateTime.now().offset))
-        event.put(CalendarContract.Events.DTEND, System.currentTimeMillis() + 3600000)
+        event.put(CalendarContract.Events.DTSTART,tm)
+        event.put(CalendarContract.Events.DTEND, tm + 3600000) //Duration is 1 hour
         event.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
         event.put(CalendarContract.Events.EVENT_LOCATION, location)
 
@@ -73,11 +71,12 @@ class Appointment {
 
     /**
      * This function parses a date and a time from two given strings
-     * @param date String that includes the date
+     * @param dt String that includes the date
      * @param time String that includes the time
      * @return LocalDateTime
      */
-    private fun getDateTimeFromString (date: String, time: String): LocalDateTime {
+    //private fun getDateTimeFromString (date: String, time: String): Long {
+    private fun getDateTimeFromString (dt: String, time: String): LocalDateTime {
         //TODO Fix millis bug so the appointment will be created properly
         var formatter = DateTimeFormatter.ofPattern("dd.MM yyyy")
         //TODO create method to check time format and fix it if it does not match the pattern
@@ -92,49 +91,47 @@ class Appointment {
         if (t.length <= 2) {
             t += ":00"
         }
-        var da = LocalDate.now(ZoneId.systemDefault())
-        var localTime = LocalTime.parse(t)
-        //var timeFormatter = DateTimeFormatter.ofPattern("hh:mm")
-        //var dateTime = LocalDateTime.ofEpochSecond(System.currentTimeMillis(),0, OffsetDateTime.now().offset )
-        var dateTime = LocalDateTime.of(da, localTime)
-        //var dateTime = LocalDateTime.now()
 
-        println("MILLIS heute: ${dateTime.toEpochSecond(ZoneOffset.ofHours(1))}")
-        println("MILLIS heute: ${LocalDateTime.ofEpochSecond(System.currentTimeMillis(),0, OffsetDateTime.now().offset ).toEpochSecond(
-            OffsetDateTime.now().offset)}")
-        println("MILLIS SYSTEM: ${System.currentTimeMillis()}")
-        //var localTime = LocalTime.parse(time, timeFormatter)
-        //var localTime = LocalTime.parse(t)
+        var localTime = LocalTime.parse(t)
+        var dateTime = LocalDateTime.now()
 
         //Checking for keywords to determine the correct date and returns it
-        if (date.contains("morgen")) {
+        if (dt.contains("morgen")) {
             //dateTime = dateTime.withDayOfMonth(dateTime.dayOfMonth + 1)
             dateTime = dateTime.plusDays(1)
             dateTime = dateTime.withHour(localTime.hour)
             dateTime = dateTime.withMinute(localTime.minute)
+            dateTime = dateTime.withSecond(0)
 
-            println("UHRZEIT: ${localTime}")
-            println("DATUM UND UHRZEIT: ${dateTime.toEpochSecond(OffsetDateTime.now().offset)}")
-            println("DATUM UND UHRZEIT: ${dateTime.toLocalDate()}")
-            println("DATUM UND UHRZEIT: ${dateTime.toLocalTime()}")
             return dateTime
         }
-        if (date.contains("heute")) {
+        if (dt.contains("heute")) {
             dateTime = dateTime.withHour(localTime.hour)
             dateTime = dateTime.withMinute(localTime.minute)
+
             return dateTime
         }
-        if (date.contains("übermorgen")) {
-            dateTime = dateTime.withDayOfMonth(dateTime.dayOfMonth + 1)
+        if (dt.contains("übermorgen")) {
+            dateTime = dateTime.plusDays(2)
             dateTime = dateTime.withHour(localTime.hour)
             dateTime = dateTime.withMinute(localTime.minute)
+
             return dateTime
-            //LocalDate.of(d.year, d.month, d.dayOfMonth + 2)
         }
-        //TODO add 0 in front of date string if intex of '.' is 1
+
+        var dte = dt
+        if (dt.contains("am")) dte = dt.split("am ")[1]
+        if (dt.contains("an dem")) dte = dt.split("an dem ")[1]
+
+        if (dte.indexOf('.') <= 1 ) dte = "0$dte"
+
+        //TODO insert missing 0 after first '.'
+        println(dte)
 
         //Normal date was named, parsing it into LocalDateTime
-        var d = LocalDate.parse(date, formatter)
+
+        //TODO dtermine which formatter to use, "dd.MM yyyy" or "dd. monat yyyy"
+        var d = LocalDate.parse(dte, formatter)
         dateTime = dateTime.withYear(d.year)
         dateTime = dateTime.withMonth(d.monthValue)
         dateTime = dateTime.withDayOfMonth(d.dayOfMonth)

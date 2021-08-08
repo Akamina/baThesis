@@ -69,7 +69,7 @@ open class MainActivity : AppCompatActivity() {
 
         //testing purposes:
         appntmnt.setName("test")
-        appntmnt.setDate("morgen")
+        appntmnt.setDate("am 1.10 2021")
         appntmnt.setLocation("zuhause")
         appntmnt.setTime("15:34 Uhr")
 
@@ -78,10 +78,22 @@ open class MainActivity : AppCompatActivity() {
         btn_tts.setOnClickListener{
 
             val text = textbox.text.toString().trim()
+            /*
             if (text.isNotEmpty()) {
                 askUser(text, this, REQUEST_CODE_STT_NAME)
             } else {
                 Toast.makeText(this, "Text cannot be empty", Toast.LENGTH_LONG).show()
+            }
+            */
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1")
+
+                logger.writeLog(text, 0)
+            } else {
+                textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+
+                logger.writeLog(text, 0)
+
             }
         }
 
