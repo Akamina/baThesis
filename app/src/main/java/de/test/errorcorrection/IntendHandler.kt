@@ -71,7 +71,7 @@ class IntendHandler {
         when (command) {
             "create" -> when (target) {
                 //"appointment" -> tmp.createAppointment(mainActivity)//println("$command $target")
-                "appointment" -> mainActivity.appntmnt.createAppointment(mainActivity)//println("$command $target")
+                "appointment" -> mainActivity.appntmnt.askName(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
                 else -> { println("Ziel nicht verstanden")}

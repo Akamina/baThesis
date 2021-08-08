@@ -26,5 +26,13 @@ class Permissions {
         if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(mainActivity, arrayOf(Manifest.permission.CAMERA), 1)
         }
+
+        if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(mainActivity, arrayOf(Manifest.permission.READ_CALENDAR), 1)
+        }
+
+        if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(mainActivity, arrayOf(Manifest.permission.WRITE_CALENDAR), 1)
+        }
     }
 }

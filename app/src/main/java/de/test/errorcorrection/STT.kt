@@ -15,10 +15,10 @@ class STT {
 
 
     /**
-     * This method generates a String from users voice input
-     * @return User input
+     * This method generates a String from users voice input. Used to start dialogue.
      */
-    internal fun getUserInputMain(mainActivity: MainActivity): String {
+    internal fun getUserInputMain(mainActivity: MainActivity) {
+        //Create Intent
         val sttIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         sttIntent.putExtra(
             RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -27,22 +27,22 @@ class STT {
         sttIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
         sttIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now!")
 
+        //Start STT activity
         try {
             mainActivity.startActivityForResult(sttIntent, MainActivity.REQUEST_CODE_STT)
         } catch (e: ActivityNotFoundException) {
             e.printStackTrace()
-            //Toast.makeText(this, "Your device does not support STT.", Toast.LENGTH_LONG).show()
         }
-        return mainActivity.findViewById<EditText>(R.id.et_text_input).getText().toString()
     }
 
     /**
      * This method generates a String from users voice input
      * @return User input
      */
-    internal fun getUserInput(mainActivity: MainActivity, requestCode: Int): String = runBlocking {
+    internal fun getUserInput(mainActivity: MainActivity, requestCode: Int) {
     //internal fun getUserInput(mainActivity: MainActivity): String = runBlocking {
         //mainActivity.sem.acquire()
+        //Create Intent
         val sttIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         sttIntent.putExtra(
             RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -51,9 +51,9 @@ class STT {
         sttIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
         sttIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now!")
 
-
+        //Start STT activity
         try {
-                mainActivity.startActivityForResult(sttIntent, requestCode)
+            mainActivity.startActivityForResult(sttIntent, requestCode)
 
             //mainActivity.startActivityForResult(sttIntent, MainActivity.REQUEST_CODE_STT_ANSWER)
             //mainActivity.setResult(Activity.RESULT_OK, sttIntent)
@@ -67,9 +67,9 @@ class STT {
         //Thread.sleep(3000)
         //mainActivity.sem.acquire()
 
-        println(mainActivity.findViewById<EditText>(R.id.et_text_input).getText().toString())
+        //println(mainActivity.findViewById<EditText>(R.id.et_text_input).getText().toString())
         //mainActivity.sem.release()
-        return@runBlocking "foo"//mainActivity.findViewById<EditText>(R.id.et_text_input).getText().toString()
+        //return "foo"//mainActivity.findViewById<EditText>(R.id.et_text_input).getText().toString()
     }
 
 
