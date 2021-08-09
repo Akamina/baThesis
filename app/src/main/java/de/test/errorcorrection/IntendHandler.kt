@@ -83,7 +83,8 @@ class IntendHandler {
                 else -> { println("Ziel nicht verstanden")}
             }
             "delete" -> when (target) {
-                "appointment" -> println("$command $target")
+                //"appointment" -> println("$command $target")
+                "appointment" -> mainActivity.appntmnt.askAppointment(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
                 else -> { println("Ziel nicht verstanden")}

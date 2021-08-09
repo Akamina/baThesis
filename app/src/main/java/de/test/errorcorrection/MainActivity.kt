@@ -9,11 +9,9 @@ import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import com.jakewharton.threetenabp.AndroidThreeTen
 import kotlinx.coroutines.*
 import java.util.*
-import java.util.concurrent.Semaphore
 
 open class MainActivity : AppCompatActivity() {
     companion object {
@@ -23,6 +21,7 @@ open class MainActivity : AppCompatActivity() {
         internal const val REQUEST_CODE_STT_DATE = 4
         internal const val REQUEST_CODE_STT_TIME = 5
         internal const val REQUEST_CODE_STT_LOCATION = 6
+        internal const val REQUEST_CODE_STT_DELETE_APPOINTMENT = 7
     }
 
     //Initialize TTS-Engine
@@ -69,9 +68,9 @@ open class MainActivity : AppCompatActivity() {
 
         //testing purposes:
         appntmnt.setName("test")
-        appntmnt.setDate("am 1.10 2021")
+        appntmnt.setDate("am 9.08 2021")
         appntmnt.setLocation("zuhause")
-        appntmnt.setTime("15:34 Uhr")
+        appntmnt.setTime("19:34 Uhr")
 
         appntmnt.createAppointment(this)
 
@@ -181,6 +180,7 @@ open class MainActivity : AppCompatActivity() {
                 }
             }
             //Get the time for the appointment and ask for location
+            //TODO add check for valid date, if invalid ask again
             REQUEST_CODE_STT_TIME -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
                     val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
@@ -195,6 +195,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+            //TODO add check for valid time, if invalid ask again
             //Get the location for the appointment and start creating it
             REQUEST_CODE_STT_LOCATION -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
@@ -206,6 +207,20 @@ open class MainActivity : AppCompatActivity() {
                         println(recognizedText) //debug
                         appntmnt.setLocation(recognizedText)
                         appntmnt.createAppointment(this)
+                    }
+                }
+            }
+            //Get the name of the appointment and call delete function
+            REQUEST_CODE_STT_DELETE_APPOINTMENT -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText) //debug
+                        //appntmnt.setLocation(recognizedText)
+                        appntmnt.deleteAppointment(this, recognizedText)
                     }
                 }
             }

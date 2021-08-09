@@ -1,12 +1,17 @@
 package de.test.errorcorrection
 
 import android.content.ContentValues
+import android.database.Cursor
 import android.net.Uri
-import android.provider.CalendarContract
-import org.threeten.bp.format.DateTimeFormatter
 import android.os.Build
+import android.provider.CalendarContract
 import org.threeten.bp.*
+import org.threeten.bp.format.DateTimeFormatter
 import java.util.*
+import android.content.ContentUris
+
+
+
 
 
 class Appointment {
@@ -75,7 +80,6 @@ class Appointment {
      * @param time String that includes the time
      * @return LocalDateTime
      */
-    //private fun getDateTimeFromString (date: String, time: String): Long {
     private fun getDateTimeFromString (dt: String, time: String): LocalDateTime {
         //TODO Fix millis bug so the appointment will be created properly
         var formatter = DateTimeFormatter.ofPattern("dd.MM yyyy")
@@ -141,6 +145,91 @@ class Appointment {
         return dateTime
     }
 
+    /**
+     * This function deletes given appointment
+     * @param mainActivity Context
+     * @param recognizedText Name of the appointment
+     */
+    internal fun deleteAppointment(mainActivity: MainActivity, recognizedText: String) {
+        var id = listSelectedCalendars(recognizedText, mainActivity)
+        var iNumRowsDeleted = 0
+
+        val eventUri = ContentUris
+            .withAppendedId(getCalendarUriBase(), id)
+        iNumRowsDeleted = mainActivity.getContentResolver().delete(eventUri, null, null)
+
+        println("Rows deleted: $iNumRowsDeleted")
+        //TODO if iNumRowsDeleted is 0, notify user that no appointment was found and ask again for a name
+        //return iNumRowsDeleted
+    }
+
+    /**
+     * This function creates calendar Uri
+     * @return Uri
+     */
+    private fun getCalendarUriBase(): Uri {
+        val eventUri: Uri
+        eventUri = if (Build.VERSION.SDK_INT <= 7) {
+            // the old way
+            Uri.parse("content://calendar/events")
+        } else {
+            // the new way
+            Uri.parse("content://com.android.calendar/events")
+        }
+        return eventUri
+    }
+
+    /**
+     * This function starts deletion dialogue
+     * @param mainActivity Context
+     */
+    fun askAppointment(mainActivity: MainActivity) {
+        println("Lösche Termin")
+        val s = "Welchen Termin möchtest du löschen?"
+        mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_DELETE_APPOINTMENT)
+    }
+
+    /**
+     * This function gives the ID of an appointment
+     * @param eventtitle Name of event
+     * @param mainActivity Context
+     * @return id of given event
+     */
+    private fun listSelectedCalendars(eventtitle: String, mainActivity: MainActivity): Long {
+        val eventUri: Uri
+        eventUri = if (Build.VERSION.SDK_INT <= 7) {
+            // the old way
+                //TODO maybe change this
+            Uri.parse("content://calendar/events")
+        } else {
+            // the new way
+            Uri.parse("content://com.android.calendar/events")
+        }
+        var result = 0
+        //Create array of id and title
+        val projection = arrayOf("_id", "title")
+        val cursor: Cursor? = mainActivity.getContentResolver().query(
+            eventUri, null, null, null,
+            null
+        )
+        if (cursor!!.moveToFirst()) {
+            var calName: String
+            var calID: String
+            val nameCol: Int = cursor.getColumnIndex(projection[1])
+            val idCol: Int = cursor.getColumnIndex(projection[0])
+            //Get all events with matching name
+            do {
+                calName = cursor.getString(nameCol)
+                calID = cursor.getString(idCol)
+                if (calName != null && calName.contains(eventtitle)) {
+                    result = calID.toInt()
+                }
+            } while (cursor.moveToNext())
+            cursor.close()
+        }
+        return result.toLong()
+    }
+
     internal fun setName(name: String) {
         this.name = name
     }
@@ -156,6 +245,7 @@ class Appointment {
     internal fun setLocation(location: String) {
         this.location = location
     }
+
 
 
 }
