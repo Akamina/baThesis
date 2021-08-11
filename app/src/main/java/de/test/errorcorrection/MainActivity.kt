@@ -22,6 +22,10 @@ open class MainActivity : AppCompatActivity() {
         internal const val REQUEST_CODE_STT_TIME = 5
         internal const val REQUEST_CODE_STT_LOCATION = 6
         internal const val REQUEST_CODE_STT_DELETE_APPOINTMENT = 7
+        internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT = 8
+        internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD = 9
+        internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW = 10
+        internal const val REQUEST_CODE_STT_NOTIFY = 2
     }
 
     //Initialize TTS-Engine
@@ -134,6 +138,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+
             /*
             REQUEST_CODE_STT_ANSWER -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
@@ -219,8 +224,47 @@ open class MainActivity : AppCompatActivity() {
                         textbox.setText(recognizedText)
                         logger.writeLog(recognizedText, 1)
                         println(recognizedText) //debug
-                        //appntmnt.setLocation(recognizedText)
                         appntmnt.deleteAppointment(this, recognizedText)
+                    }
+                }
+            }
+            //Get the name of the appointment and call edit function
+            REQUEST_CODE_STT_EDIT_APPOINTMENT -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText) //debug
+                        appntmnt.startEdit(recognizedText, this)
+                    }
+                }
+            }
+            //Get the field to edit and continue edit
+            REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText) //debug
+                        appntmnt.continueEdit(recognizedText, this)
+                    }
+                }
+            }
+            //Get changes and perform these on the event
+            REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText) //debug
+                        //TODO add fucntion to edit event
+                        appntmnt.editAppointment(recognizedText, this)
                     }
                 }
             }
@@ -275,7 +319,7 @@ open class MainActivity : AppCompatActivity() {
             job.join()
         }
 
-        mainActivity.stt.getUserInput(mainActivity, requestCode)
+        if (requestCode != REQUEST_CODE_STT_NOTIFY)mainActivity.stt.getUserInput(mainActivity, requestCode)
 
     }
 

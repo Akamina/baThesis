@@ -9,9 +9,7 @@ import org.threeten.bp.*
 import org.threeten.bp.format.DateTimeFormatter
 import java.util.*
 import android.content.ContentUris
-
-
-
+import kotlin.properties.Delegates
 
 
 class Appointment {
@@ -20,9 +18,8 @@ class Appointment {
     lateinit private var date: String
     lateinit private var time: String
     lateinit private var location: String
-
-
-
+    private var eventID by Delegates.notNull<Long>()
+    private lateinit var field: String
 
     /**
      * This function creates an event and adds it to the default calendar
@@ -63,7 +60,6 @@ class Appointment {
     }
 
     /**
-     * TODO
      * This function starts the creation dialogue for an appointment
      * @param mainActivity context to call function
      */
@@ -81,7 +77,6 @@ class Appointment {
      * @return LocalDateTime
      */
     private fun getDateTimeFromString (dt: String, time: String): LocalDateTime {
-        //TODO Fix millis bug so the appointment will be created properly
         var formatter = DateTimeFormatter.ofPattern("dd.MM yyyy")
         //TODO create method to check time format and fix it if it does not match the pattern
         var t = "0"
@@ -151,16 +146,118 @@ class Appointment {
      * @param recognizedText Name of the appointment
      */
     internal fun deleteAppointment(mainActivity: MainActivity, recognizedText: String) {
-        var id = listSelectedCalendars(recognizedText, mainActivity)
+        eventID = listSelectedCalendars(recognizedText, mainActivity)
+
+        var tmp = 0
+        if (eventID == tmp.toLong()) mainActivity.askUser("Der Termin $recognizedText konnte nicht gefunden werden.", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+
         var iNumRowsDeleted = 0
 
         val eventUri = ContentUris
-            .withAppendedId(getCalendarUriBase(), id)
+            .withAppendedId(getCalendarUriBase(), eventID)
         iNumRowsDeleted = mainActivity.getContentResolver().delete(eventUri, null, null)
 
         println("Rows deleted: $iNumRowsDeleted")
-        //TODO if iNumRowsDeleted is 0, notify user that no appointment was found and ask again for a name
         //return iNumRowsDeleted
+    }
+
+    /**
+     * This function checks if the appointment is valid and starts edit dialogue
+     * @param text User input
+     * @param mainActivity Context
+     */
+    internal fun startEdit(text: String, mainActivity: MainActivity) {
+        eventID = listSelectedCalendars(text, mainActivity)
+        println("Event ID: $eventID")
+        var tmp = 0
+        if (eventID == tmp.toLong()) {
+            mainActivity.askUser("Der Termin $text konnte nicht gefunden werden.", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+        } else {
+            //Ask for field
+            mainActivity.askUser("Was soll geändert werden?", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
+        }
+    }
+
+    /**
+     * This function checks user input for validity and starts error dialogue if input is invalid
+     * @param text user input
+     * @param mainActivity Context
+     */
+    internal fun continueEdit(text: String, mainActivity: MainActivity) {
+        field = mainActivity.handler.getField(text, mainActivity)
+        if (field == "error") {
+            mainActivity.askUser("Was soll geändert werden?", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
+        } else {
+            mainActivity.askUser("Wie lautet die Änderung?", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW)
+        }
+    }
+
+    /**
+     * This function performs the changes on the given appointment
+     * @param text User input
+     * @param mainActivity Context
+     */
+    internal fun editAppointment(text: String, mainActivity: MainActivity) {
+        var event = getCalendarUriBase()
+        var newEvent = ContentValues()
+        var updateUri = ContentUris.withAppendedId(event, eventID)
+        var date: Long
+        var iNumRowsUpdated = 0
+        //TODO check for valid date/time if invalid ask again or stop
+        when (field) {
+            "name" -> {
+                newEvent.put(CalendarContract.Events.TITLE, text)
+                iNumRowsUpdated = mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+            }
+            "date" -> {
+                //get date from event
+                date = getDateFromEvent(mainActivity, event)
+                //TODO parse input to date
+                newEvent.put(CalendarContract.Events.DTSTART, date)
+                iNumRowsUpdated = mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+            }
+            "time" -> {
+                //get time from event
+                date = getDateFromEvent(mainActivity, event)
+                //TODO parse input to time
+                newEvent.put(CalendarContract.Events.DTSTART, date)
+                iNumRowsUpdated = mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+            }
+            "location" -> {
+                newEvent.put(CalendarContract.Events.EVENT_LOCATION, text)
+                iNumRowsUpdated = mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+
+            }
+        }
+    }
+
+    /**
+     * Gets start timestamp from given event and returns the timestamp
+     * @param mainActivity Context
+     * @param event Get Timestamp from this event
+     * @return timestamp
+     */
+    private fun getDateFromEvent(mainActivity: MainActivity, event: Uri): Long {
+        val projection = arrayListOf("_id", "dtstart")
+        val cursor: Cursor? = mainActivity.contentResolver.query(event, null, null, null, null)
+        var result: Long = 0
+        if (cursor!!.moveToFirst()) {
+            var calTime: Long
+            var calID: Long
+            val timeCol : Int = cursor.getColumnIndex(projection[1])
+            val idCol: Int = cursor.getColumnIndex(projection[0])
+
+            do {
+                calID = cursor.getLong(idCol)
+                calTime = cursor.getLong(timeCol)
+                if (calID == eventID) {
+                    result = calTime
+                    println("Zeit: $calTime ID: $calID")
+                }
+            } while (cursor.moveToNext())
+            cursor.close()
+        }
+        return result
     }
 
     /**
@@ -183,10 +280,20 @@ class Appointment {
      * This function starts deletion dialogue
      * @param mainActivity Context
      */
-    fun askAppointment(mainActivity: MainActivity) {
+    fun askAppointmentDelete(mainActivity: MainActivity) {
         println("Lösche Termin")
-        val s = "Welchen Termin möchtest du löschen?"
+        val s = "Wie lautet der Name des Termins, den du löschen möchtest?"
         mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_DELETE_APPOINTMENT)
+    }
+
+    /**
+     * This function starts edit dialogue
+     * @param mainActivity Context
+     */
+    fun askAppointmentEdit(mainActivity: MainActivity) {
+        println("Bearbeite Termin")
+        val s = "Wie lautet der Name des Termins, den du bearbeiten möchtest?"
+        mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT)
     }
 
     /**
@@ -197,12 +304,12 @@ class Appointment {
      */
     private fun listSelectedCalendars(eventtitle: String, mainActivity: MainActivity): Long {
         val eventUri: Uri
+        //TODO maybe call getCalendarUriBase here instead
         eventUri = if (Build.VERSION.SDK_INT <= 7) {
-            // the old way
-                //TODO maybe change this
+            // old versions
             Uri.parse("content://calendar/events")
         } else {
-            // the new way
+            // new versions
             Uri.parse("content://com.android.calendar/events")
         }
         var result = 0

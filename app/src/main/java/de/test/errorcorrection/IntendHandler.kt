@@ -8,18 +8,6 @@ class IntendHandler {
      * @return type of command (create, edit, delete, read)
      */
     private fun getCommand(text: String): String {
-        //Create appointment
-        //Create reminder
-        //Create list
-        //Edit appointment
-        //Edit reminder
-        //Edit list
-        //Delete appointment
-        //Delete reminder
-        //Delete list
-        //Read appointment
-        //Read reminder
-        //Read list
         //TODO: add lists of words and synonyms to compare here
         if (text.contains("erstell")) {
             //erinnere mich soll auch diesen Fall auslösen
@@ -77,14 +65,15 @@ class IntendHandler {
                 else -> { println("Ziel nicht verstanden")}
             }
             "edit" -> when (target) {
-                "appointment" -> println("$command $target")
+                //"appointment" -> println("$command $target")
+                "appointment" -> mainActivity.appntmnt.askAppointmentEdit(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
                 else -> { println("Ziel nicht verstanden")}
             }
             "delete" -> when (target) {
                 //"appointment" -> println("$command $target")
-                "appointment" -> mainActivity.appntmnt.askAppointment(mainActivity)//println("$command $target")
+                "appointment" -> mainActivity.appntmnt.askAppointmentDelete(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
                 else -> { println("Ziel nicht verstanden")}
@@ -97,5 +86,67 @@ class IntendHandler {
             }
             else -> { println("Kommando nicht verstanden")}
         }
+    }
+
+    /**
+     * This function determines which field has to be edited
+     * @param text User input
+     * @param mainActivity Context
+     */
+    internal fun getField(text: String, mainActivity: MainActivity): String {
+        //Check name
+        if (isName(text)) return "name"
+        //Check date
+        if (isDate(text)) return "date"
+        //Check time
+        if (isTime(text)) return "time"
+        //Check location
+        if (isLocation(text)) return "location"
+
+        return "error"
+    }
+
+    /**
+     * This function determines if the field to change is "location"
+     * @param text User input
+     * @return
+     */
+    private fun isLocation(text: String): Boolean {
+        if (text.contains("ort") || text.contains("location") || text.contains("örtlichkeit") || text.contains("Örtlichkeit")) return true
+
+        return false
+    }
+
+    /**
+     * This function determines if the field to change is "time"
+     * @param text User input
+     * @return
+     */
+    private fun isTime(text: String): Boolean {
+        if (text.contains("zeit") || text.contains("Zeit") || text.contains("Uhrzeit") || text.contains("uhrzeit")) return true
+
+        return false
+    }
+
+    /**
+     * This function determines if the field to change is "date"
+     * @param text User input
+     * @return
+     */
+    private fun isDate(text: String): Boolean {
+        if (text.contains("Datum") || text.contains("datum")) return true
+
+        return false
+    }
+
+    /**
+     * This function determines if the field to change is "name"
+     * @param text User input
+     * @return
+     */
+    private fun isName(text: String): Boolean {
+        if (text.contains("Name") || text.contains("name") || text.contains("Titel") || text.contains("titel") || text.contains("Bezeichnung") || text.contains("bezeichnung")) return true
+
+        return false
     }
 }
