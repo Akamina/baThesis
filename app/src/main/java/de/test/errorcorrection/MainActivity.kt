@@ -7,15 +7,21 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import com.jakewharton.threetenabp.AndroidThreeTen
 import kotlinx.coroutines.*
+import java.lang.Exception
 import java.util.*
 
 open class MainActivity : AppCompatActivity() {
     companion object {
         internal const val REQUEST_CODE_STT = 1
+
         //internal const val REQUEST_CODE_STT_ANSWER = 2
         internal const val REQUEST_CODE_STT_NAME = 3
         internal const val REQUEST_CODE_STT_DATE = 4
@@ -30,7 +36,8 @@ open class MainActivity : AppCompatActivity() {
 
     //Initialize TTS-Engine
     internal val textToSpeechEngine: TextToSpeech by lazy {
-        TextToSpeech(this@MainActivity
+        TextToSpeech(
+            this@MainActivity
         ) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeechEngine.language = Locale.GERMANY
@@ -42,8 +49,13 @@ open class MainActivity : AppCompatActivity() {
     internal lateinit var permissions: Permissions
     internal lateinit var handler: IntendHandler
     internal lateinit var stt: STT
-    internal lateinit var tts : TTS
+    internal lateinit var tts: TTS
     internal lateinit var appntmnt: Appointment
+    internal lateinit var test: ActivityResultLauncher<Intent>
+    private var countTime: Int = 0
+    private var countDate: Int = 0
+    private var countEdit: Int = 0
+
 
     /**
      * This functions initializes the application
@@ -75,10 +87,12 @@ open class MainActivity : AppCompatActivity() {
         appntmnt.setDate("am 9.08 2021")
         appntmnt.setLocation("zuhause")
         appntmnt.setTime("19:34 Uhr")
+        println(appntmnt.parseLocalDate("am 9.7 2021"))
+        println(appntmnt.parseLocalTime("19:34 Uhr"))
 
-        appntmnt.createAppointment(this)
+        //appntmnt.createAppointment(this)
 
-        btn_tts.setOnClickListener{
+        btn_tts.setOnClickListener {
 
             val text = textbox.text.toString().trim()
             /*
@@ -99,6 +113,206 @@ open class MainActivity : AppCompatActivity() {
 
             }
         }
+
+
+        test =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { rslt: ActivityResult ->
+                //val textbox = findViewById<EditText>(R.id.et_text_input)
+                //var rq = rslt.data?.extras?.get("REQUEST_CODE")
+                var rq = rslt.data?.extras?.getInt("REQUEST_CODE")
+
+                //println("rslt data: ${rslt.data!!.extras}")
+                if (rq == null) {
+                    Log.e("FileResultLauncher", "No request code was handed over in data intent")
+                }
+                val uri = rslt.data?.data
+                println(rq)
+                /*if (uri == null || rslt.resultCode != RESULT_OK) {
+                    Log.i("FileResultLauncher", "No Uri returned or result wasn't OK.")
+                    return@registerForActivityResult
+                }
+
+                 */
+                val result =
+                    rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                result?.let {
+                    val recognizedText = it[0]
+                    //textbox.setText(recognizedText)
+                    //logger.writeLog(recognizedText, 1)
+                    //handler.handleInput(recognizedText, this)
+
+
+                    //<------when with request code here
+                    when (rq) {
+                        REQUEST_CODE_STT -> {
+                            //if (resultCode == Activity.RESULT_OK && result.data != null) {
+                            //val result =
+                            //rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                            //result?.let {
+                            //val recognizedText = it[0]
+                            textbox.setText(recognizedText)
+                            logger.writeLog(recognizedText, 1)
+                            handler.handleInput(recognizedText, this)
+                            //}
+                            //}
+                        }
+
+                        //Get name of appointment and ask for date
+                        REQUEST_CODE_STT_NAME -> {
+                            //if (resultCode == Activity.RESULT_OK && result.data != null) {
+                            val result =
+                                rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                            result?.let {
+                                val recognizedText = it[0]
+                                textbox.setText(recognizedText)
+                                logger.writeLog(recognizedText, 1)
+                                println(recognizedText) //Debug
+                                appntmnt.setName(recognizedText)
+                                askUser(
+                                    "An welchem Datum ist der Termin?", this,
+                                    REQUEST_CODE_STT_DATE
+                                )
+
+                            }
+                            //}
+                        }
+                        //Get the date of the appointment and ask for time
+                        REQUEST_CODE_STT_DATE -> {
+                            //if (resultCode == Activity.RESULT_OK && result.data != null) {
+                            val result =
+                                rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                            result?.let {
+                                val recognizedText = it[0]
+                                textbox.setText(recognizedText)
+                                logger.writeLog(recognizedText, 1)
+                                println(recognizedText) //debug
+                                appntmnt.setDate(recognizedText)
+                                askUser(
+                                    "Um welche Uhrzeit ist der Termin?", this,
+                                    REQUEST_CODE_STT_TIME
+                                )
+
+                            }
+                            //}
+                        }
+                        //Get the time for the appointment and ask for location
+                        //TODO add check for valid date, if invalid ask again
+                        REQUEST_CODE_STT_TIME -> {
+                            //if (resultCode == Activity.RESULT_OK && result.data != null) {
+                            val result =
+                                rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                            result?.let {
+                                val recognizedText = it[0]
+                                textbox.setText(recognizedText)
+                                logger.writeLog(recognizedText, 1)
+                                println(recognizedText)
+                                try {
+                                    appntmnt.parseLocalTime(recognizedText)
+                                    appntmnt.setTime(recognizedText)
+                                    askUser(
+                                        "Wo findet der Termin statt?", this,
+                                        REQUEST_CODE_STT_LOCATION
+                                    )
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    askUser(
+                                        "Um welche Uhrzeit ist der Termin?", this,
+                                        REQUEST_CODE_STT_TIME
+                                    )
+                                }
+                                /*
+                                appntmnt.setTime(recognizedText)
+                                askUser(
+                                    "Wo findet der Termin statt?", this,
+                                    REQUEST_CODE_STT_LOCATION
+                                )*/
+
+                            }
+                            //}
+                        }
+                        //TODO add check for valid time, if invalid ask again
+                        //Get the location for the appointment and start creating it
+                        REQUEST_CODE_STT_LOCATION -> {
+                            //if (resultCode == Activity.RESULT_OK && result.data != null) {
+                            val result =
+                                rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                            result?.let {
+                                val recognizedText = it[0]
+                                textbox.setText(recognizedText)
+                                logger.writeLog(recognizedText, 1)
+                                println(recognizedText) //debug
+                                appntmnt.setLocation(recognizedText)
+                                appntmnt.createAppointment(this)
+                            }
+                            //}
+                        }
+                        //Get the name of the appointment and call delete function
+                        REQUEST_CODE_STT_DELETE_APPOINTMENT -> {
+                            //if (resultCode == Activity.RESULT_OK && result.data != null) {
+                            val result =
+                                rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                            result?.let {
+                                val recognizedText = it[0]
+                                textbox.setText(recognizedText)
+                                logger.writeLog(recognizedText, 1)
+                                println(recognizedText) //debug
+                                appntmnt.deleteAppointment(
+                                    this,
+                                    recognizedText
+                                )
+                            }
+                            //}
+                        }
+                        //Get the name of the appointment and call edit function
+                        REQUEST_CODE_STT_EDIT_APPOINTMENT -> {
+                            //if (resultCode == Activity.RESULT_OK && result.data != null) {
+                            val result =
+                                rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                            result?.let {
+                                val recognizedText = it[0]
+                                textbox.setText(recognizedText)
+                                logger.writeLog(recognizedText, 1)
+                                println(recognizedText) //debug
+                                appntmnt.startEdit(recognizedText, this)
+                            }
+                            //}
+                        }
+                        //Get the field to edit and continue edit
+                        REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD -> {
+                            //if (resultCode == Activity.RESULT_OK && result.data != null) {
+                            val result =
+                                rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                            result?.let {
+                                val recognizedText = it[0]
+                                textbox.setText(recognizedText)
+                                logger.writeLog(recognizedText, 1)
+                                println(recognizedText) //debug
+                                appntmnt.continueEdit(recognizedText, this)
+                            }
+                            //}
+                        }
+                        //Get changes and perform these on the event
+                        REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW -> {
+                            //if (resultCode == android.app.Activity.RESULT_OK && data != null) {
+                            val result =
+                                rslt.data!!.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+                            result?.let {
+                                val recognizedText = it[0]
+                                textbox.setText(recognizedText)
+                                logger.writeLog(recognizedText, 1)
+                                kotlin.io.println(recognizedText) //debug
+                                //TODO add fucntion to edit event
+                                appntmnt.editAppointment(
+                                    recognizedText,
+                                    this
+                                )
+                            }
+                        }
+                        else -> return@registerForActivityResult
+                    }
+                }
+            }
+
 
         val btn_stt = findViewById<Button>(R.id.recordButton)
 
@@ -178,16 +392,28 @@ open class MainActivity : AppCompatActivity() {
                         textbox.setText(recognizedText)
                         logger.writeLog(recognizedText, 1)
                         println(recognizedText) //debug
-                        appntmnt.setDate(recognizedText)
-                        askUser("Um welche Uhrzeit ist der Termin?", this, REQUEST_CODE_STT_TIME)
-
+                        try {
+                            appntmnt.parseLocalDate(recognizedText)
+                            appntmnt.setDate(recognizedText)
+                            askUser(
+                                "Um welche Uhrzeit ist der Termin?",
+                                this,
+                                REQUEST_CODE_STT_TIME
+                            )
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            countDate++
+                            if (countDate < 3) {
+                                askUser("Das habe ich nicht richtig verstanden. An welchem Datum ist der Termin?", this, REQUEST_CODE_STT_DATE)
+                            }
+                        }
                     }
                 }
             }
             //Get the time for the appointment and ask for location
-            //TODO add check for valid date, if invalid ask again
             REQUEST_CODE_STT_TIME -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
+                    /*
                     val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
                     result?.let {
                         val recognizedText = it[0]
@@ -198,9 +424,33 @@ open class MainActivity : AppCompatActivity() {
                         askUser("Wo findet der Termin statt?", this, REQUEST_CODE_STT_LOCATION)
 
                     }
+
+                     */
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText)
+                        countDate = 0
+                        try {
+                            appntmnt.parseLocalTime(recognizedText)
+                            appntmnt.setTime(recognizedText)
+                            askUser(
+                                "Wo findet der Termin statt?", this,
+                                REQUEST_CODE_STT_LOCATION
+                            )
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            countTime++
+                            if (countTime < 3)askUser(
+                                "Das habe ich nicht verstanden. Um welche Uhrzeit ist der Termin?", this,
+                                REQUEST_CODE_STT_TIME
+                            )
+                        }
+                    }
                 }
             }
-            //TODO add check for valid time, if invalid ask again
             //Get the location for the appointment and start creating it
             REQUEST_CODE_STT_LOCATION -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
@@ -210,6 +460,7 @@ open class MainActivity : AppCompatActivity() {
                         textbox.setText(recognizedText)
                         logger.writeLog(recognizedText, 1)
                         println(recognizedText) //debug
+                        countTime = 0
                         appntmnt.setLocation(recognizedText)
                         appntmnt.createAppointment(this)
                     }
@@ -262,9 +513,28 @@ open class MainActivity : AppCompatActivity() {
                         val recognizedText = it[0]
                         textbox.setText(recognizedText)
                         logger.writeLog(recognizedText, 1)
-                        println(recognizedText) //debug
-                        //TODO add fucntion to edit event
-                        appntmnt.editAppointment(recognizedText, this)
+                        try {
+                            if (appntmnt.field == "date") {
+                                appntmnt.parseLocalDate(recognizedText)
+                            }
+                            if (appntmnt.field == "time") {
+                                appntmnt.parseLocalTime(recognizedText)
+                            }
+                            countEdit = 0
+                            println(recognizedText) //debug
+                            //handler.getField(recognizedText,this)
+                            appntmnt.editAppointment(recognizedText, this)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            countEdit++
+                            if (countEdit < 3) {
+                                askUser(
+                                    "Das habe ich nicht richtig verstanden. Wie lautet die Änderung?",
+                                    this,
+                                    REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -319,11 +589,12 @@ open class MainActivity : AppCompatActivity() {
             job.join()
         }
 
-        if (requestCode != REQUEST_CODE_STT_NOTIFY)mainActivity.stt.getUserInput(mainActivity, requestCode)
+        if (requestCode != REQUEST_CODE_STT_NOTIFY) mainActivity.stt.getUserInput(
+            mainActivity,
+            requestCode
+        )
 
     }
-
-
 
 
     /**

@@ -39,7 +39,7 @@ class IntendHandler {
         if (text.contains("Erinnerung")) {
             return "reminder"
         }
-        if (text.contains("Termin")) {
+        if (text.contains("Termin") || text.contains("termin")) {
             return "appointment"
         }
         return "error"
@@ -112,7 +112,7 @@ class IntendHandler {
      * @return
      */
     private fun isLocation(text: String): Boolean {
-        if (text.contains("ort") || text.contains("location") || text.contains("örtlichkeit") || text.contains("Örtlichkeit")) return true
+        if (text.contains("Ort") || text.contains("ort") || text.contains("location") || text.contains("örtlichkeit") || text.contains("Örtlichkeit")) return true
 
         return false
     }

@@ -9,6 +9,9 @@ import org.threeten.bp.*
 import org.threeten.bp.format.DateTimeFormatter
 import java.util.*
 import android.content.ContentUris
+import org.threeten.bp.LocalDateTime.ofEpochSecond
+import org.threeten.bp.LocalDateTime.ofInstant
+import org.threeten.bp.OffsetDateTime.ofInstant
 import kotlin.properties.Delegates
 
 
@@ -19,7 +22,7 @@ class Appointment {
     lateinit private var time: String
     lateinit private var location: String
     private var eventID by Delegates.notNull<Long>()
-    private lateinit var field: String
+    internal lateinit var field: String
 
     /**
      * This function creates an event and adds it to the default calendar
@@ -35,11 +38,12 @@ class Appointment {
 
         //Select default calendar
         event.put(CalendarContract.Events.CALENDAR_ID, 1)
-        val tm = getDateTimeFromString(date, time).toInstant(OffsetDateTime.now().offset).toEpochMilli()
+        val tm =
+            getDateTimeFromString(date, time).toInstant(OffsetDateTime.now().offset).toEpochMilli()
 
         //Add data and details to event
         event.put(CalendarContract.Events.TITLE, name)
-        event.put(CalendarContract.Events.DTSTART,tm)
+        event.put(CalendarContract.Events.DTSTART, tm)
         event.put(CalendarContract.Events.DTEND, tm + 3600000) //Duration is 1 hour
         event.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
         event.put(CalendarContract.Events.EVENT_LOCATION, location)
@@ -55,7 +59,15 @@ class Appointment {
         mainActivity.contentResolver.insert(baseUri, event)
 
         println("added event")
-        //TODO notify user that the given appointment was created
+        var dateTime = LocalDateTime.ofInstant(
+            Instant.ofEpochMilli(tm),
+            DateTimeUtils.toZoneId(TimeZone.getDefault())
+        )
+        mainActivity.askUser(
+            "Der Termin $name am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${dateTime.hour}:${dateTime.minute} Uhr mit dem Ort $location wurde erstellt.",
+            mainActivity,
+            MainActivity.REQUEST_CODE_STT_NOTIFY
+        )
 
     }
 
@@ -67,8 +79,89 @@ class Appointment {
         println("Erstelle Termin")
         val s = "Wie lautet der Name des Termins?"
         mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_NAME)
-        Thread.sleep(3000) //do i need this?
+        //Thread.sleep(3000) //do i need this?
     }
+
+
+    /**
+     * This function parses a LocalDate from given String
+     * @param text User input
+     * @return Parsed date from string
+     */
+    internal fun parseLocalDate(text: String): LocalDate {
+        var localDate = LocalDate.now()
+        var formatter: DateTimeFormatter
+        var dte = text
+        //Checking for natural language here
+        if (text.contains("übermorgen") || text.contains("Übermorgen")) {
+            return localDate.plusDays(2)
+        }
+        if (text.contains("heute") || text.contains("Heute")) {
+            return localDate
+        }
+        if (text.contains("morgen") || text.contains("Morgen")) {
+            return localDate.plusDays(1)
+        }
+        //Parsing date from string
+
+        if (dte.contains("am")) dte = dte.split("am ")[1]
+        if (dte.contains("an dem")) dte = dte.split("an dem ")[1]
+        if (dte.indexOf('.') <= 1) dte = "0$dte"
+
+        //Check for spoken out month
+        if (containsMonthName(text)) {
+            formatter = DateTimeFormatter.ofPattern("dd. MMMM yyyy", Locale.GERMANY)
+            localDate = LocalDate.parse(dte, formatter)
+
+        } else {
+            formatter = DateTimeFormatter.ofPattern("dd.MM yyyy")
+            //split at ' ' then at '.' and if [1].length <=1 add 0
+            if (dte.split(" ")[0].split('.')[1].length <= 1) {
+                dte = dte.split('.')[0]+"."+"0"+dte.split('.')[1]
+            }
+            localDate = LocalDate.parse(dte, formatter)
+        }
+
+        return localDate
+    }
+
+    /**
+     * This function checks if the user said the full month (April) or just the matching digit (4)
+     * @param text User input
+     * @return If the text contains only digits as month false is returned
+     */
+    private fun containsMonthName(text: String): Boolean {
+        return text.contains("Januar") || text.contains("Februar") || text.contains("März") || text.contains(
+            "April"
+        ) || text.contains("Mai") || text.contains("Juni") || text.contains("Juli") || text.contains(
+            "August"
+        ) || text.contains("September") || text.contains("Oktober") || text.contains("November") || text.contains(
+            "Dezember"
+        )
+    }
+
+
+    /**
+     * This function parses a string with a valid time into a LocalTime object
+     * @param text User input to parse
+     * @return parsed LocalTime
+     */
+    internal fun parseLocalTime(text: String): LocalTime {
+        var t = "0"
+        var formatter = DateTimeFormatter.ofPattern("HH:mm")
+        //Checking for a missing 0 in front of the time string, if it is missing, add it
+        if (text.split(" ")[0][0] == '0') {
+            t += text.split(" ")[0]
+        } else {
+            t = text.split(" ")[0]
+        }
+        //Checking for correct length
+        if (t.length <= 2) {
+            t += ":00"
+        }
+        return LocalTime.parse(t, formatter)
+    }
+
 
     /**
      * This function parses a date and a time from two given strings
@@ -76,9 +169,9 @@ class Appointment {
      * @param time String that includes the time
      * @return LocalDateTime
      */
-    private fun getDateTimeFromString (dt: String, time: String): LocalDateTime {
-        var formatter = DateTimeFormatter.ofPattern("dd.MM yyyy")
-        //TODO create method to check time format and fix it if it does not match the pattern
+    private fun getDateTimeFromString(dt: String, time: String): LocalDateTime {
+        //var formatter = DateTimeFormatter.ofPattern("dd.MM yyyy")
+        /*
         var t = "0"
         //Checking for a missing 0 in front of the time string, if it is missing, add it
         if (time.split(" ")[0][0] =='0') {
@@ -91,10 +184,20 @@ class Appointment {
             t += ":00"
         }
 
-        var localTime = LocalTime.parse(t)
+        var localTime = LocalTime.parse(t) */
+        var localTime = parseLocalTime(time)
         var dateTime = LocalDateTime.now()
+        var localDate = parseLocalDate(dt)
+        /*
 
         //Checking for keywords to determine the correct date and returns it
+        if (dt.contains("übermorgen")) {
+            dateTime = dateTime.plusDays(2)
+            dateTime = dateTime.withHour(localTime.hour)
+            dateTime = dateTime.withMinute(localTime.minute)
+
+            return dateTime
+        }
         if (dt.contains("morgen")) {
             //dateTime = dateTime.withDayOfMonth(dateTime.dayOfMonth + 1)
             dateTime = dateTime.plusDays(1)
@@ -110,30 +213,23 @@ class Appointment {
 
             return dateTime
         }
-        if (dt.contains("übermorgen")) {
-            dateTime = dateTime.plusDays(2)
-            dateTime = dateTime.withHour(localTime.hour)
-            dateTime = dateTime.withMinute(localTime.minute)
-
-            return dateTime
-        }
 
         var dte = dt
         if (dt.contains("am")) dte = dt.split("am ")[1]
         if (dt.contains("an dem")) dte = dt.split("an dem ")[1]
 
-        if (dte.indexOf('.') <= 1 ) dte = "0$dte"
+        if (dte.indexOf('.') <= 1) dte = "0$dte"
 
-        //TODO insert missing 0 after first '.'
         println(dte)
 
         //Normal date was named, parsing it into LocalDateTime
 
-        //TODO dtermine which formatter to use, "dd.MM yyyy" or "dd. monat yyyy"
         var d = LocalDate.parse(dte, formatter)
-        dateTime = dateTime.withYear(d.year)
-        dateTime = dateTime.withMonth(d.monthValue)
-        dateTime = dateTime.withDayOfMonth(d.dayOfMonth)
+
+         */
+        dateTime = dateTime.withYear(localDate.year)
+        dateTime = dateTime.withMonth(localDate.monthValue)
+        dateTime = dateTime.withDayOfMonth(localDate.dayOfMonth)
         dateTime = dateTime.withHour(localTime.hour)
         dateTime = dateTime.withMinute(localTime.minute)
 
@@ -149,7 +245,14 @@ class Appointment {
         eventID = listSelectedCalendars(recognizedText, mainActivity)
 
         var tmp = 0
-        if (eventID == tmp.toLong()) mainActivity.askUser("Der Termin $recognizedText konnte nicht gefunden werden.", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+        if (eventID == tmp.toLong()) {
+            mainActivity.askUser(
+                "Der Termin $recognizedText konnte nicht gefunden werden.",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_NOTIFY
+            )
+            return
+        }
 
         var iNumRowsDeleted = 0
 
@@ -159,6 +262,11 @@ class Appointment {
 
         println("Rows deleted: $iNumRowsDeleted")
         //return iNumRowsDeleted
+        mainActivity.askUser(
+            "Der Termin $recognizedText wurde entfernt",
+            mainActivity,
+            MainActivity.REQUEST_CODE_STT_NOTIFY
+        )
     }
 
     /**
@@ -171,10 +279,18 @@ class Appointment {
         println("Event ID: $eventID")
         var tmp = 0
         if (eventID == tmp.toLong()) {
-            mainActivity.askUser("Der Termin $text konnte nicht gefunden werden.", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+            mainActivity.askUser(
+                "Der Termin $text konnte nicht gefunden werden.",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_NOTIFY
+            )
         } else {
             //Ask for field
-            mainActivity.askUser("Was soll geändert werden?", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
+            mainActivity.askUser(
+                "Was soll geändert werden?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD
+            )
         }
     }
 
@@ -186,9 +302,17 @@ class Appointment {
     internal fun continueEdit(text: String, mainActivity: MainActivity) {
         field = mainActivity.handler.getField(text, mainActivity)
         if (field == "error") {
-            mainActivity.askUser("Was soll geändert werden?", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
+            mainActivity.askUser(
+                "Was soll geändert werden?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD
+            )
         } else {
-            mainActivity.askUser("Wie lautet die Änderung?", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW)
+            mainActivity.askUser(
+                "Wie lautet die Änderung?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW
+            )
         }
     }
 
@@ -203,31 +327,56 @@ class Appointment {
         var updateUri = ContentUris.withAppendedId(event, eventID)
         var date: Long
         var iNumRowsUpdated = 0
-        //TODO check for valid date/time if invalid ask again or stop
+        var localDateTime: LocalDateTime
         when (field) {
             "name" -> {
                 newEvent.put(CalendarContract.Events.TITLE, text)
-                iNumRowsUpdated = mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                iNumRowsUpdated =
+                    mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                //TODO notify user ask user if he wants to change something else
             }
             "date" -> {
                 //get date from event
                 date = getDateFromEvent(mainActivity, event)
-                //TODO parse input to date
-                newEvent.put(CalendarContract.Events.DTSTART, date)
-                iNumRowsUpdated = mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                //Calculate into LocalDateTime from millis
+                localDateTime = ofEpochSecond(date / 1000, 0, OffsetDateTime.now().offset)
+                var localDate = parseLocalDate(text)
+                //Update date
+                localDateTime = localDateTime.withYear(localDate.year)
+                localDateTime = localDateTime.withMonth(localDate.monthValue)
+                localDateTime = localDateTime.withDayOfMonth(localDate.dayOfMonth)
+
+                newEvent.put(CalendarContract.Events.DTSTART, localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
+                iNumRowsUpdated =
+                    mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                //TODO notify user ask user if he wants to change something else
             }
             "time" -> {
                 //get time from event
                 date = getDateFromEvent(mainActivity, event)
-                //TODO parse input to time
-                newEvent.put(CalendarContract.Events.DTSTART, date)
-                iNumRowsUpdated = mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+
+                //Calculate into LocalDateTime from Millis
+                localDateTime = ofEpochSecond(date / 1000, 0, OffsetDateTime.now().offset)
+                var localTime = parseLocalTime(text)
+                //Update time
+                localDateTime = localDateTime.withHour(localTime.hour)
+                localDateTime = localDateTime.withMinute(localTime.minute)
+
+                newEvent.put(CalendarContract.Events.DTSTART, localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
+                iNumRowsUpdated =
+                    mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                //TODO notify user ask user if he wants to change something else
             }
             "location" -> {
                 newEvent.put(CalendarContract.Events.EVENT_LOCATION, text)
-                iNumRowsUpdated = mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                iNumRowsUpdated =
+                    mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                //TODO notify user ask user if he wants to change something else
+
+            } else -> {
 
             }
+            //TODO bug detected: date was messed up somehow during changing location
         }
     }
 
@@ -244,7 +393,7 @@ class Appointment {
         if (cursor!!.moveToFirst()) {
             var calTime: Long
             var calID: Long
-            val timeCol : Int = cursor.getColumnIndex(projection[1])
+            val timeCol: Int = cursor.getColumnIndex(projection[1])
             val idCol: Int = cursor.getColumnIndex(projection[0])
 
             do {
@@ -292,7 +441,7 @@ class Appointment {
      */
     fun askAppointmentEdit(mainActivity: MainActivity) {
         println("Bearbeite Termin")
-        val s = "Wie lautet der Name des Termins, den du bearbeiten möchtest?"
+        val s = "Wie lautet der Name des Termins den du bearbeiten möchtest?"
         mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT)
     }
 
@@ -303,15 +452,15 @@ class Appointment {
      * @return id of given event
      */
     private fun listSelectedCalendars(eventtitle: String, mainActivity: MainActivity): Long {
-        val eventUri: Uri
-        //TODO maybe call getCalendarUriBase here instead
+        val eventUri: Uri = getCalendarUriBase()
+        /*
         eventUri = if (Build.VERSION.SDK_INT <= 7) {
             // old versions
             Uri.parse("content://calendar/events")
         } else {
             // new versions
             Uri.parse("content://com.android.calendar/events")
-        }
+        } */
         var result = 0
         //Create array of id and title
         val projection = arrayOf("_id", "title")
@@ -352,7 +501,6 @@ class Appointment {
     internal fun setLocation(location: String) {
         this.location = location
     }
-
 
 
 }
