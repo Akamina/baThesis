@@ -62,29 +62,47 @@ class IntendHandler {
                 "appointment" -> mainActivity.appntmnt.askName(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
-                else -> { println("Ziel nicht verstanden")}
+                else -> {
+                    println("Ziel nicht verstanden")
+                    mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                }
             }
             "edit" -> when (target) {
                 //"appointment" -> println("$command $target")
                 "appointment" -> mainActivity.appntmnt.askAppointmentEdit(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
-                else -> { println("Ziel nicht verstanden")}
+                else -> {
+                    println("Ziel nicht verstanden")
+                    mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                }
             }
             "delete" -> when (target) {
                 //"appointment" -> println("$command $target")
                 "appointment" -> mainActivity.appntmnt.askAppointmentDelete(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
-                else -> { println("Ziel nicht verstanden")}
+                else -> {
+                    println("Ziel nicht verstanden")
+                    mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                }
             }
             "read" -> when (target) {
-                "appointment" -> println("$command $target")
+                //"appointment" -> println("$command $target")
+                //"appointment" -> mainActivity.appntmnt.readAppointment(mainActivity)//println("$command $target")
+                "appointment" -> mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME)
+//mainActivity.appntmnt.readAppointment(mainActivity)//println("$command $target")
                 "reminder" -> println("$command $target")
                 "list" -> println("$command $target")
-                else -> { println("Ziel nicht verstanden")}
+                else -> {
+                    println("Ziel nicht verstanden")
+                    mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                }
             }
-            else -> { println("Kommando nicht verstanden")}
+            else -> {
+                println("Kommando nicht verstanden")
+                mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+            }
         }
     }
 
@@ -102,6 +120,8 @@ class IntendHandler {
         if (isTime(text)) return "time"
         //Check location
         if (isLocation(text)) return "location"
+        //Check for read out
+        if (text.contains("lies")) return "read"
 
         return "error"
     }
@@ -112,7 +132,10 @@ class IntendHandler {
      * @return
      */
     private fun isLocation(text: String): Boolean {
-        if (text.contains("Ort") || text.contains("ort") || text.contains("location") || text.contains("örtlichkeit") || text.contains("Örtlichkeit")) return true
+        if (text.contains("Ort") || text.contains("ort") || text.contains("location") || text.contains(
+                "örtlichkeit"
+            ) || text.contains("Örtlichkeit")
+        ) return true
 
         return false
     }
@@ -123,7 +146,10 @@ class IntendHandler {
      * @return
      */
     private fun isTime(text: String): Boolean {
-        if (text.contains("zeit") || text.contains("Zeit") || text.contains("Uhrzeit") || text.contains("uhrzeit")) return true
+        if (text.contains("zeit") || text.contains("Zeit") || text.contains("Uhrzeit") || text.contains(
+                "uhrzeit"
+            )
+        ) return true
 
         return false
     }
@@ -145,7 +171,10 @@ class IntendHandler {
      * @return
      */
     private fun isName(text: String): Boolean {
-        if (text.contains("Name") || text.contains("name") || text.contains("Titel") || text.contains("titel") || text.contains("Bezeichnung") || text.contains("bezeichnung")) return true
+        if (text.contains("Name") || text.contains("name") || text.contains("Titel") || text.contains(
+                "titel"
+            ) || text.contains("Bezeichnung") || text.contains("bezeichnung")
+        ) return true
 
         return false
     }

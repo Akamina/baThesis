@@ -10,9 +10,6 @@ import org.threeten.bp.format.DateTimeFormatter
 import java.util.*
 import android.content.ContentUris
 import org.threeten.bp.LocalDateTime.ofEpochSecond
-import org.threeten.bp.LocalDateTime.ofInstant
-import org.threeten.bp.OffsetDateTime.ofInstant
-import kotlin.properties.Delegates
 
 
 class Appointment {
@@ -21,7 +18,7 @@ class Appointment {
     lateinit private var date: String
     lateinit private var time: String
     lateinit private var location: String
-    private var eventID by Delegates.notNull<Long>()
+    private var eventID : Long = 0
     internal lateinit var field: String
 
     /**
@@ -117,7 +114,7 @@ class Appointment {
             formatter = DateTimeFormatter.ofPattern("dd.MM yyyy")
             //split at ' ' then at '.' and if [1].length <=1 add 0
             if (dte.split(" ")[0].split('.')[1].length <= 1) {
-                dte = dte.split('.')[0]+"."+"0"+dte.split('.')[1]
+                dte = dte.split('.')[0] + "." + "0" + dte.split('.')[1]
             }
             localDate = LocalDate.parse(dte, formatter)
         }
@@ -170,63 +167,10 @@ class Appointment {
      * @return LocalDateTime
      */
     private fun getDateTimeFromString(dt: String, time: String): LocalDateTime {
-        //var formatter = DateTimeFormatter.ofPattern("dd.MM yyyy")
-        /*
-        var t = "0"
-        //Checking for a missing 0 in front of the time string, if it is missing, add it
-        if (time.split(" ")[0][0] =='0') {
-            t += time.split(" ")[0]
-        } else {
-            t = time.split(" ")[0]
-        }
-        //Checking for correct length
-        if (t.length <= 2) {
-            t += ":00"
-        }
-
-        var localTime = LocalTime.parse(t) */
         var localTime = parseLocalTime(time)
         var dateTime = LocalDateTime.now()
         var localDate = parseLocalDate(dt)
-        /*
 
-        //Checking for keywords to determine the correct date and returns it
-        if (dt.contains("übermorgen")) {
-            dateTime = dateTime.plusDays(2)
-            dateTime = dateTime.withHour(localTime.hour)
-            dateTime = dateTime.withMinute(localTime.minute)
-
-            return dateTime
-        }
-        if (dt.contains("morgen")) {
-            //dateTime = dateTime.withDayOfMonth(dateTime.dayOfMonth + 1)
-            dateTime = dateTime.plusDays(1)
-            dateTime = dateTime.withHour(localTime.hour)
-            dateTime = dateTime.withMinute(localTime.minute)
-            dateTime = dateTime.withSecond(0)
-
-            return dateTime
-        }
-        if (dt.contains("heute")) {
-            dateTime = dateTime.withHour(localTime.hour)
-            dateTime = dateTime.withMinute(localTime.minute)
-
-            return dateTime
-        }
-
-        var dte = dt
-        if (dt.contains("am")) dte = dt.split("am ")[1]
-        if (dt.contains("an dem")) dte = dt.split("an dem ")[1]
-
-        if (dte.indexOf('.') <= 1) dte = "0$dte"
-
-        println(dte)
-
-        //Normal date was named, parsing it into LocalDateTime
-
-        var d = LocalDate.parse(dte, formatter)
-
-         */
         dateTime = dateTime.withYear(localDate.year)
         dateTime = dateTime.withMonth(localDate.monthValue)
         dateTime = dateTime.withDayOfMonth(localDate.dayOfMonth)
@@ -307,6 +251,8 @@ class Appointment {
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD
             )
+        } else if (field == "read") {
+            readAppointmentEdit(mainActivity)
         } else {
             mainActivity.askUser(
                 "Wie lautet die Änderung?",
@@ -333,7 +279,11 @@ class Appointment {
                 newEvent.put(CalendarContract.Events.TITLE, text)
                 iNumRowsUpdated =
                     mainActivity.contentResolver.update(updateUri, newEvent, null, null)
-                //TODO notify user ask user if he wants to change something else
+                mainActivity.askUser(
+                    "Ich habe den Namen auf $text geändert. Möchtest du noch etwas ändern?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK
+                )
             }
             "date" -> {
                 //get date from event
@@ -346,10 +296,18 @@ class Appointment {
                 localDateTime = localDateTime.withMonth(localDate.monthValue)
                 localDateTime = localDateTime.withDayOfMonth(localDate.dayOfMonth)
 
-                newEvent.put(CalendarContract.Events.DTSTART, localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
+                newEvent.put(
+                    CalendarContract.Events.DTSTART,
+                    localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli()
+                )
                 iNumRowsUpdated =
                     mainActivity.contentResolver.update(updateUri, newEvent, null, null)
-                //TODO notify user ask user if he wants to change something else
+                mainActivity.askUser(
+                    "Ich habe das Datum auf $localDate geändert. Möchtest du noch etwas ändern?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK
+                )
+
             }
             "time" -> {
                 //get time from event
@@ -362,18 +320,32 @@ class Appointment {
                 localDateTime = localDateTime.withHour(localTime.hour)
                 localDateTime = localDateTime.withMinute(localTime.minute)
 
-                newEvent.put(CalendarContract.Events.DTSTART, localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
+                newEvent.put(
+                    CalendarContract.Events.DTSTART,
+                    localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli()
+                )
                 iNumRowsUpdated =
                     mainActivity.contentResolver.update(updateUri, newEvent, null, null)
-                //TODO notify user ask user if he wants to change something else
+                mainActivity.askUser(
+                    "Ich habe die Zeit auf $localTime geändert. Möchtest du noch etwas ändern?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK
+                )
+
             }
             "location" -> {
                 newEvent.put(CalendarContract.Events.EVENT_LOCATION, text)
                 iNumRowsUpdated =
                     mainActivity.contentResolver.update(updateUri, newEvent, null, null)
-                //TODO notify user ask user if he wants to change something else
+                mainActivity.askUser(
+                    "Ich habe den Ort auf $text geändert. Möchtest du noch etwas ändern?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK
+                )
 
-            } else -> {
+
+            }
+            else -> {
 
             }
             //TODO bug detected: date was messed up somehow during changing location
@@ -451,20 +423,12 @@ class Appointment {
      * @param mainActivity Context
      * @return id of given event
      */
-    private fun listSelectedCalendars(eventtitle: String, mainActivity: MainActivity): Long {
+    internal fun listSelectedCalendars(eventtitle: String, mainActivity: MainActivity): Long {
         val eventUri: Uri = getCalendarUriBase()
-        /*
-        eventUri = if (Build.VERSION.SDK_INT <= 7) {
-            // old versions
-            Uri.parse("content://calendar/events")
-        } else {
-            // new versions
-            Uri.parse("content://com.android.calendar/events")
-        } */
-        var result = 0
+        var result: Long = 0
         //Create array of id and title
         val projection = arrayOf("_id", "title")
-        val cursor: Cursor? = mainActivity.getContentResolver().query(
+        val cursor: Cursor? = mainActivity.contentResolver.query(
             eventUri, null, null, null,
             null
         )
@@ -478,12 +442,116 @@ class Appointment {
                 calName = cursor.getString(nameCol)
                 calID = cursor.getString(idCol)
                 if (calName != null && calName.contains(eventtitle)) {
-                    result = calID.toInt()
+                    result = calID.toLong()
                 }
             } while (cursor.moveToNext())
             cursor.close()
         }
-        return result.toLong()
+        return result
+    }
+
+    /**
+     * Usage during edit dialogue.
+     * This function checks if an event is already set and reads it out. If no event is set it starts a dialogue to ask for an event.
+     * @param mainActivity Context
+     */
+    internal fun readAppointmentEdit(mainActivity: MainActivity) {
+
+        if (eventID == 0.toLong()) {
+            mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME)
+        } else {
+            val eventUri: Uri = getCalendarUriBase()
+            //Create array of id, title, start time and location
+            val projection = arrayOf("_id", "title", "dtstart", "eventLocation")
+            val cursor: Cursor? = mainActivity.contentResolver.query(
+                eventUri, null, null, null,
+                null
+            )
+            if (cursor!!.moveToFirst()) {
+                var calName: String
+                var calID: String
+                var calDate: String
+                var calLocation: String
+                val nameCol: Int = cursor.getColumnIndex(projection[1])
+                val idCol: Int = cursor.getColumnIndex(projection[0])
+                val dateCol: Int = cursor.getColumnIndex(projection[2])
+                val locCol: Int = cursor.getColumnIndex(projection[3])
+
+                //Get all events with matching name
+                do {
+                    calName = cursor.getString(nameCol)
+                    calID = cursor.getString(idCol)
+                    calDate = cursor.getString(dateCol)
+                    calLocation = cursor.getString(locCol)
+
+                    if (calID != null && calID.toLong() == eventID) {
+                        break
+                        //result = calID.toLong()
+                    }
+                } while (cursor.moveToNext())
+                cursor.close()
+                val localDate =
+                    ofEpochSecond(calDate.toLong() / 1000, 0, OffsetDateTime.now().offset)
+                //mainActivity.askUser("Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate().dayOfMonth}. ${localDate.toLocalDate().month} ${localDate.toLocalDate().year} um ${localDate.toLocalTime().hour}:${localDate.toLocalTime().minute} Uhr $calLocation statt", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
+                mainActivity.askUser(
+                    "Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} $calLocation statt. Möchtest du noch etwas ändern?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD
+                )
+            }
+        }
+    }
+
+    /**
+     * This function checks if an event is already set and reads it out. If no event is set it starts a dialogue to ask for an event.
+     * @param mainActivity Context
+     */
+    fun readAppointment(mainActivity: MainActivity, text: String) {
+        if (eventID == 0.toLong()) {
+            mainActivity.askUser("Der Termin $text konnte nicht gefunden werden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+            //mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME)
+        //mainActivity.waitForTTS(mainActivity)
+        } else {
+            val eventUri: Uri = getCalendarUriBase()
+            //Create array of id, title, start time and location
+            val projection = arrayOf("_id", "title", "dtstart", "eventLocation")
+            val cursor: Cursor? = mainActivity.contentResolver.query(
+                eventUri, null, null, null,
+                null
+            )
+            if (cursor!!.moveToFirst()) {
+                var calName: String
+                var calID: String
+                var calDate: String
+                var calLocation: String
+                val nameCol: Int = cursor.getColumnIndex(projection[1])
+                val idCol: Int = cursor.getColumnIndex(projection[0])
+                val dateCol: Int = cursor.getColumnIndex(projection[2])
+                val locCol: Int = cursor.getColumnIndex(projection[3])
+
+                //Get all events with matching name
+                do {
+                    calName = cursor.getString(nameCol)
+                    calID = cursor.getString(idCol)
+                    calDate = cursor.getString(dateCol)
+                    calLocation = cursor.getString(locCol)
+
+                    if (calID != null && calID.toLong() == eventID) {
+                        break
+                        //result = calID.toLong()
+                    }
+                } while (cursor.moveToNext())
+                cursor.close()
+                val localDate =
+                    ofEpochSecond(calDate.toLong() / 1000, 0, OffsetDateTime.now().offset)
+                //mainActivity.askUser("Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate().dayOfMonth}. ${localDate.toLocalDate().month} ${localDate.toLocalDate().year} um ${localDate.toLocalTime().hour}:${localDate.toLocalTime().minute} Uhr $calLocation statt", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
+                mainActivity.askUser(
+                    "Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} $calLocation statt.",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_NOTIFY
+                )
+            }
+        }
     }
 
     internal fun setName(name: String) {
@@ -501,6 +569,11 @@ class Appointment {
     internal fun setLocation(location: String) {
         this.location = location
     }
+
+    internal fun setEvent(id: Long) {
+        this.eventID = id
+    }
+
 
 
 }

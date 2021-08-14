@@ -18,11 +18,11 @@ import kotlinx.coroutines.*
 import java.lang.Exception
 import java.util.*
 
+
 open class MainActivity : AppCompatActivity() {
     companion object {
         internal const val REQUEST_CODE_STT = 1
-
-        //internal const val REQUEST_CODE_STT_ANSWER = 2
+        internal const val REQUEST_CODE_STT_NOTIFY = 2
         internal const val REQUEST_CODE_STT_NAME = 3
         internal const val REQUEST_CODE_STT_DATE = 4
         internal const val REQUEST_CODE_STT_TIME = 5
@@ -31,7 +31,9 @@ open class MainActivity : AppCompatActivity() {
         internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT = 8
         internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD = 9
         internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW = 10
-        internal const val REQUEST_CODE_STT_NOTIFY = 2
+        internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK = 11
+        internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT_READ = 12
+        internal const val REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME = 13
     }
 
     //Initialize TTS-Engine
@@ -44,6 +46,7 @@ open class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     internal lateinit var logger: Logger
     internal lateinit var permissions: Permissions
@@ -196,7 +199,6 @@ open class MainActivity : AppCompatActivity() {
                             //}
                         }
                         //Get the time for the appointment and ask for location
-                        //TODO add check for valid date, if invalid ask again
                         REQUEST_CODE_STT_TIME -> {
                             //if (resultCode == Activity.RESULT_OK && result.data != null) {
                             val result =
@@ -230,7 +232,6 @@ open class MainActivity : AppCompatActivity() {
                             }
                             //}
                         }
-                        //TODO add check for valid time, if invalid ask again
                         //Get the location for the appointment and start creating it
                         REQUEST_CODE_STT_LOCATION -> {
                             //if (resultCode == Activity.RESULT_OK && result.data != null) {
@@ -301,7 +302,6 @@ open class MainActivity : AppCompatActivity() {
                                 textbox.setText(recognizedText)
                                 logger.writeLog(recognizedText, 1)
                                 kotlin.io.println(recognizedText) //debug
-                                //TODO add fucntion to edit event
                                 appntmnt.editAppointment(
                                     recognizedText,
                                     this
@@ -338,7 +338,6 @@ open class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         val textbox = findViewById<EditText>(R.id.et_text_input)
-        //TODO handle system user dialog in here
         when (requestCode) {
             //Start of dialogue
             REQUEST_CODE_STT -> {
@@ -538,6 +537,40 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+            //Ask if the user wants to do some more changes
+            REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText =it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        if (recognizedText.contains("nein") || recognizedText.contains("Nein") || recognizedText.contains("Stop") || recognizedText.contains("stop")) {
+                            return
+                        } else {
+                            println(recognizedText) //debug
+                            appntmnt.continueEdit(recognizedText, this)
+                        }
+                    }
+                }
+            }
+            //Read out appointment during edit
+            REQUEST_CODE_STT_EDIT_APPOINTMENT_READ -> {
+                appntmnt.readAppointmentEdit(this)
+            }
+            //Read out appointment without context set so ask for context
+            REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        appntmnt.setEvent(appntmnt.listSelectedCalendars(recognizedText, this))
+                        appntmnt.readAppointment(this, recognizedText)
+                    }
+                }
+            }
 
         }
     }
@@ -561,9 +594,10 @@ open class MainActivity : AppCompatActivity() {
 
 
     /**
-     * TODO
-     *
-     * @param text
+     * This function reads out a given text and continues an appropriate dialogue.
+     * @param text text that will be read out
+     * @param mainActivity context
+     * @param requestCode code that is used to determine what to do next
      */
     internal fun askUser(text: String, mainActivity: MainActivity, requestCode: Int) {
         //val textbox = findViewById<EditText>(R.id.et_text_input)
@@ -582,7 +616,12 @@ open class MainActivity : AppCompatActivity() {
                 logger.writeLog(text, 0)
 
             }
-            delay((text.length * 80).toLong())
+            var speakingEnd: Boolean = textToSpeechEngine.isSpeaking
+            do {
+                delay(500)
+                speakingEnd = textToSpeechEngine.isSpeaking
+            } while (speakingEnd)
+            //delay((text.length * 80).toLong())
         }
         //Wait until job is done, speaking in this case
         runBlocking {
@@ -594,6 +633,14 @@ open class MainActivity : AppCompatActivity() {
             requestCode
         )
 
+    }
+
+    internal fun waitForTTS(mainActivity: MainActivity) {
+        var speakingEnd: Boolean = textToSpeechEngine.isSpeaking
+        do {
+            Thread.sleep(500)
+            speakingEnd = textToSpeechEngine.isSpeaking
+        } while (speakingEnd)
     }
 
 
