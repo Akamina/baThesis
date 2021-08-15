@@ -69,7 +69,7 @@ class STT {
      * This function
      */
     internal fun getUserInput(mainActivity: MainActivity, requestCode: Int) {
-    //internal fun getUserInput(mainActivity: MainActivity): String = runBlocking {
+        //internal fun getUserInput(mainActivity: MainActivity): String = runBlocking {
         //mainActivity.sem.acquire()
         //Create Intent
         val sttIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
@@ -248,14 +248,14 @@ class STT {
 
 
              */
-                   // test.launch(sttIntent)
-                    //mainActivity.register
+            // test.launch(sttIntent)
+            //mainActivity.register
 
-                    //mainActivity.startActivityForResult(sttIntent, MainActivity.REQUEST_CODE_STT_ANSWER)
-                    //mainActivity.setResult(Activity.RESULT_OK, sttIntent)
-                    //mainActivity.finish()
-                //}
-        }catch (e: ActivityNotFoundException) {
+            //mainActivity.startActivityForResult(sttIntent, MainActivity.REQUEST_CODE_STT_ANSWER)
+            //mainActivity.setResult(Activity.RESULT_OK, sttIntent)
+            //mainActivity.finish()
+            //}
+        } catch (e: ActivityNotFoundException) {
             e.printStackTrace()
             //Toast.makeText(this, "Your device does not support STT.", Toast.LENGTH_LONG).show()
         }

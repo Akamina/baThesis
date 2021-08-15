@@ -45,12 +45,7 @@ class Appointment {
         event.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
         event.put(CalendarContract.Events.EVENT_LOCATION, location)
 
-        val baseUri: Uri
-        baseUri = if (Build.VERSION.SDK_INT >= 8) {
-            Uri.parse("content://com.android.calendar/events")
-        } else {
-            Uri.parse("content://calendar/events")
-        }
+        val baseUri = getCalendarUriBase()
 
         //Insert event into calendar
         mainActivity.contentResolver.insert(baseUri, event)
@@ -166,7 +161,7 @@ class Appointment {
      * @param time String that includes the time
      * @return LocalDateTime
      */
-    private fun getDateTimeFromString(dt: String, time: String): LocalDateTime {
+    internal fun getDateTimeFromString(dt: String, time: String): LocalDateTime {
         var localTime = parseLocalTime(time)
         var dateTime = LocalDateTime.now()
         var localDate = parseLocalDate(dt)
@@ -358,7 +353,7 @@ class Appointment {
      * @param event Get Timestamp from this event
      * @return timestamp
      */
-    private fun getDateFromEvent(mainActivity: MainActivity, event: Uri): Long {
+    internal fun getDateFromEvent(mainActivity: MainActivity, event: Uri): Long {
         val projection = arrayListOf("_id", "dtstart")
         val cursor: Cursor? = mainActivity.contentResolver.query(event, null, null, null, null)
         var result: Long = 0
@@ -385,7 +380,7 @@ class Appointment {
      * This function creates calendar Uri
      * @return Uri
      */
-    private fun getCalendarUriBase(): Uri {
+    internal fun getCalendarUriBase(): Uri {
         val eventUri: Uri
         eventUri = if (Build.VERSION.SDK_INT <= 7) {
             // the old way
@@ -456,9 +451,9 @@ class Appointment {
      * @param mainActivity Context
      */
     internal fun readAppointmentEdit(mainActivity: MainActivity) {
-
+        println("Termin vorlesen beim bearbeiten")
         if (eventID == 0.toLong()) {
-            mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME)
+            mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_READ)
         } else {
             val eventUri: Uri = getCalendarUriBase()
             //Create array of id, title, start time and location

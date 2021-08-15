@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.CalendarContract
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.util.Log
@@ -34,6 +35,17 @@ open class MainActivity : AppCompatActivity() {
         internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK = 11
         internal const val REQUEST_CODE_STT_EDIT_APPOINTMENT_READ = 12
         internal const val REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME = 13
+        internal const val REQUEST_CODE_STT_REMINDER_NAME = 14
+        internal const val REQUEST_CODE_STT_REMINDER_DATE = 15
+        internal const val REQUEST_CODE_STT_REMINDER_TIME = 16
+        internal const val REQUEST_CODE_STT_REMINDER_DELETE = 17
+        internal const val REQUEST_CODE_STT_REMINDER_READ = 18
+        internal const val REQUEST_CODE_STT_REMINDER_EDIT = 19
+        internal const val REQUEST_CODE_STT_REMINDER_EDIT_FIELD = 20
+        internal const val REQUEST_CODE_STT_REMINDER_EDIT_READ = 21
+        internal const val REQUEST_CODE_STT_REMINDER_EDIT_NEW = 22
+        internal const val REQUEST_CODE_STT_REMINDER_EDIT_ASK = 23
+
     }
 
     //Initialize TTS-Engine
@@ -54,6 +66,7 @@ open class MainActivity : AppCompatActivity() {
     internal lateinit var stt: STT
     internal lateinit var tts: TTS
     internal lateinit var appntmnt: Appointment
+    internal lateinit var rmdr: Reminder
     internal lateinit var test: ActivityResultLauncher<Intent>
     private var countTime: Int = 0
     private var countDate: Int = 0
@@ -76,6 +89,7 @@ open class MainActivity : AppCompatActivity() {
         stt = STT()
         tts = TTS()
         appntmnt = Appointment()
+        rmdr = Reminder()
 
         // Checking permissions
         permissions.checkPermissions(this)
@@ -351,22 +365,6 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
-            /*
-            REQUEST_CODE_STT_ANSWER -> {
-                if (resultCode == Activity.RESULT_OK && data != null) {
-                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-                    result?.let {
-                        val recognizedText = it[0]
-                        textbox.setText(recognizedText)
-                        logger.writeLog(recognizedText, 1)
-
-                    }
-                }
-
-            }
-
-             */
             //Get name of appointment and ask for date
             REQUEST_CODE_STT_NAME -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
@@ -403,7 +401,11 @@ open class MainActivity : AppCompatActivity() {
                             e.printStackTrace()
                             countDate++
                             if (countDate < 3) {
-                                askUser("Das habe ich nicht richtig verstanden. An welchem Datum ist der Termin?", this, REQUEST_CODE_STT_DATE)
+                                askUser(
+                                    "Das habe ich nicht richtig verstanden. An welchem Datum ist der Termin?",
+                                    this,
+                                    REQUEST_CODE_STT_DATE
+                                )
                             }
                         }
                     }
@@ -412,19 +414,6 @@ open class MainActivity : AppCompatActivity() {
             //Get the time for the appointment and ask for location
             REQUEST_CODE_STT_TIME -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
-                    /*
-                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-                    result?.let {
-                        val recognizedText = it[0]
-                        textbox.setText(recognizedText)
-                        logger.writeLog(recognizedText, 1)
-                        println(recognizedText)
-                        appntmnt.setTime(recognizedText)
-                        askUser("Wo findet der Termin statt?", this, REQUEST_CODE_STT_LOCATION)
-
-                    }
-
-                     */
                     val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
                     result?.let {
                         val recognizedText = it[0]
@@ -442,8 +431,9 @@ open class MainActivity : AppCompatActivity() {
                         } catch (e: Exception) {
                             e.printStackTrace()
                             countTime++
-                            if (countTime < 3)askUser(
-                                "Das habe ich nicht verstanden. Um welche Uhrzeit ist der Termin?", this,
+                            if (countTime < 3) askUser(
+                                "Das habe ich nicht verstanden. Um welche Uhrzeit ist der Termin?",
+                                this,
                                 REQUEST_CODE_STT_TIME
                             )
                         }
@@ -542,10 +532,15 @@ open class MainActivity : AppCompatActivity() {
                 if (resultCode == Activity.RESULT_OK && data != null) {
                     val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
                     result?.let {
-                        val recognizedText =it[0]
+                        val recognizedText = it[0]
                         textbox.setText(recognizedText)
                         logger.writeLog(recognizedText, 1)
-                        if (recognizedText.contains("nein") || recognizedText.contains("Nein") || recognizedText.contains("Stop") || recognizedText.contains("stop")) {
+                        if (recognizedText.contains("nein") || recognizedText.contains("Nein") || recognizedText.contains(
+                                "Stop"
+                            ) || recognizedText.contains("stop") || recognizedText.contains("nichts") || recognizedText.contains(
+                                "Nichts"
+                            )
+                        ) {
                             return
                         } else {
                             println(recognizedText) //debug
@@ -556,7 +551,15 @@ open class MainActivity : AppCompatActivity() {
             }
             //Read out appointment during edit
             REQUEST_CODE_STT_EDIT_APPOINTMENT_READ -> {
-                appntmnt.readAppointmentEdit(this)
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        appntmnt.readAppointmentEdit(this)
+                    }
+                }
             }
             //Read out appointment without context set so ask for context
             REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME -> {
@@ -571,6 +574,183 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+            //Get name for reminder here
+            REQUEST_CODE_STT_REMINDER_NAME -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        rmdr.setName(recognizedText)
+                        askUser("An welchem Datum soll ich dich erinnern?", this, REQUEST_CODE_STT_REMINDER_DATE)
+                    }
+                }
+            }
+            //Get date for reminder here
+            REQUEST_CODE_STT_REMINDER_DATE -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        try {
+                            appntmnt.parseLocalDate(recognizedText)
+                            countDate = 0
+                            rmdr.setDate(recognizedText)
+                            askUser("Um wieviel Uhr soll ich dich erinnern?", this, REQUEST_CODE_STT_REMINDER_TIME)
+
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            countDate++
+                            if (countDate < 3) {
+                                askUser("Das habe ich nicht richtig verstanden. An welchem Datum soll ich dich erinnern?", this, REQUEST_CODE_STT_REMINDER_DATE)
+                            }
+                        }
+                    }
+                }
+
+            }
+            //Get time for reminder here
+            REQUEST_CODE_STT_REMINDER_TIME -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        try {
+                            appntmnt.parseLocalTime(recognizedText)
+                            countTime = 0
+                            rmdr.setTime(recognizedText)
+                            //askUser("Um wieviel Uhr soll ich dich erinnern?", this, REQUEST_CODE_STT_REMINDER_TIME)
+                            rmdr.createReminder(this)
+
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            countTime++
+                            if (countTime < 3) {
+                                askUser("Das habe ich nicht richtig verstanden. Um wieviel Uhr soll ich dich erinnern?", this, REQUEST_CODE_STT_REMINDER_TIME)
+                            }
+                        }
+                    }
+                }
+            }
+            REQUEST_CODE_STT_REMINDER_DELETE -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText) //debug
+                        rmdr.deleteReminder(this, recognizedText)
+                    }
+                }
+            }
+            REQUEST_CODE_STT_REMINDER_READ -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        rmdr.setEvent(appntmnt.listSelectedCalendars(recognizedText, this))
+                        rmdr.readReminder(this, recognizedText)
+                    }
+                }
+            }
+            REQUEST_CODE_STT_REMINDER_EDIT -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText) //debug
+                        rmdr.startEdit(recognizedText, this)
+                    }
+                }
+            }
+            REQUEST_CODE_STT_REMINDER_EDIT_FIELD -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        println(recognizedText) //debug
+                        rmdr.continueEdit(recognizedText, this)
+                    }
+                }
+            }
+            REQUEST_CODE_STT_REMINDER_EDIT_NEW -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        try {
+                            if (rmdr.field == "date") {
+                                appntmnt.parseLocalDate(recognizedText)
+                            }
+                            if (rmdr.field == "time") {
+                                appntmnt.parseLocalTime(recognizedText)
+                            }
+                            countEdit = 0
+                            println(recognizedText) //debug
+                            //handler.getField(recognizedText,this)
+                            rmdr.editReminder(recognizedText, this)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            countEdit++
+                            if (countEdit < 3) {
+                                askUser(
+                                    "Das habe ich nicht richtig verstanden. Wie lautet die Änderung?",
+                                    this,
+                                    REQUEST_CODE_STT_REMINDER_EDIT_NEW
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            REQUEST_CODE_STT_REMINDER_EDIT_ASK -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        if (recognizedText.contains("nein") || recognizedText.contains("Nein") || recognizedText.contains(
+                                "Stop"
+                            ) || recognizedText.contains("stop") || recognizedText.contains("nichts") || recognizedText.contains(
+                                "Nichts"
+                            )
+                        ) {
+                            return
+                        } else {
+                            println(recognizedText) //debug
+                            rmdr.continueEdit(recognizedText, this)
+                        }
+                    }
+                }
+            }
+            REQUEST_CODE_STT_REMINDER_EDIT_READ -> {
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    result?.let {
+                        val recognizedText = it[0]
+                        textbox.setText(recognizedText)
+                        logger.writeLog(recognizedText, 1)
+                        rmdr.readReminderEdit(this)
+                        //rmdr.readReminderEdit(this)
+                    }
+                }
+            }
+
 
         }
     }
@@ -648,13 +828,6 @@ open class MainActivity : AppCompatActivity() {
      * This function starts the dialogue to create a list
      **/
     private fun createList() {
-
-    }
-
-    /**
-     * This function starts the dialogue to create a reminder
-     **/
-    private fun createReminder() {
 
     }
 

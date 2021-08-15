@@ -60,48 +60,88 @@ class IntendHandler {
             "create" -> when (target) {
                 //"appointment" -> tmp.createAppointment(mainActivity)//println("$command $target")
                 "appointment" -> mainActivity.appntmnt.askName(mainActivity)//println("$command $target")
-                "reminder" -> println("$command $target")
+                //"reminder" -> println("$command $target")
+                "reminder" -> mainActivity.askUser(
+                    "Wie lautet der Name der Erinnerung?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_REMINDER_NAME
+                )//println("$command $target")
                 "list" -> println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
-                    mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                    mainActivity.askUser(
+                        "Das habe ich leider nicht verstanden",
+                        mainActivity,
+                        MainActivity.REQUEST_CODE_STT_NOTIFY
+                    )
                 }
             }
             "edit" -> when (target) {
                 //"appointment" -> println("$command $target")
                 "appointment" -> mainActivity.appntmnt.askAppointmentEdit(mainActivity)//println("$command $target")
-                "reminder" -> println("$command $target")
+                //"reminder" -> println("$command $target")
+                "reminder" -> mainActivity.askUser("Wie heißt die Erinnerung die du bearbeiten möchtest?", mainActivity, MainActivity.REQUEST_CODE_STT_REMINDER_EDIT)//println("$command $target")
                 "list" -> println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
-                    mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                    mainActivity.askUser(
+                        "Das habe ich leider nicht verstanden",
+                        mainActivity,
+                        MainActivity.REQUEST_CODE_STT_NOTIFY
+                    )
                 }
             }
             "delete" -> when (target) {
                 //"appointment" -> println("$command $target")
                 "appointment" -> mainActivity.appntmnt.askAppointmentDelete(mainActivity)//println("$command $target")
-                "reminder" -> println("$command $target")
+                //"reminder" -> println("$command $target")
+                "reminder" -> mainActivity.askUser(
+                    "Welche Erinnerung soll gelöscht werden?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_REMINDER_DELETE
+                )//println("$command $target")
                 "list" -> println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
-                    mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                    mainActivity.askUser(
+                        "Das habe ich leider nicht verstanden",
+                        mainActivity,
+                        MainActivity.REQUEST_CODE_STT_NOTIFY
+                    )
                 }
             }
             "read" -> when (target) {
                 //"appointment" -> println("$command $target")
                 //"appointment" -> mainActivity.appntmnt.readAppointment(mainActivity)//println("$command $target")
-                "appointment" -> mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME)
+                "appointment" -> mainActivity.askUser(
+                    "Wie lautet der Name des Termins den ich vorlesen soll?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME
+                )
 //mainActivity.appntmnt.readAppointment(mainActivity)//println("$command $target")
-                "reminder" -> println("$command $target")
+                //"reminder" -> println("$command $target")
+                "reminder" -> mainActivity.askUser(
+                    "Wie lautet der Name der Erinnerung die ich vorlesen soll?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_REMINDER_READ
+                )//println("$command $target")
                 "list" -> println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
-                    mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                    mainActivity.askUser(
+                        "Das habe ich leider nicht verstanden",
+                        mainActivity,
+                        MainActivity.REQUEST_CODE_STT_NOTIFY
+                    )
                 }
             }
             else -> {
                 println("Kommando nicht verstanden")
-                mainActivity.askUser("Das habe ich leider nicht verstanden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+                mainActivity.askUser(
+                    "Das habe ich leider nicht verstanden",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_NOTIFY
+                )
             }
         }
     }
