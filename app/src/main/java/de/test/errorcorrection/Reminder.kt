@@ -238,6 +238,7 @@ class Reminder {
                 )
             }
             "date" -> {
+                //TODO add time from date here to localDateTime
                 //get date from event
                 date = mainActivity.appntmnt.getDateFromEvent(mainActivity, event)
                 //Calculate into LocalDateTime from millis
@@ -263,11 +264,12 @@ class Reminder {
 
             }
             "time" -> {
+                //TODO wenn zeit gesetzt wird, wird das datum auf 1970 gesetzt
                 //get time from event
                 date = mainActivity.appntmnt.getDateFromEvent(mainActivity, event)
 
                 //Calculate into LocalDateTime from Millis
-                localDateTime =
+                localDateTime = //maybe ignore this here and edit it directly in date
                     LocalDateTime.ofEpochSecond(date / 1000, 0, OffsetDateTime.now().offset)
                 var localTime = mainActivity.appntmnt.parseLocalTime(text)
                 //Update time

@@ -291,6 +291,8 @@ class Appointment {
                 localDateTime = localDateTime.withMonth(localDate.monthValue)
                 localDateTime = localDateTime.withDayOfMonth(localDate.dayOfMonth)
 
+                //TODO add time from date here to localDateTime
+
                 newEvent.put(
                     CalendarContract.Events.DTSTART,
                     localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli()
@@ -305,8 +307,10 @@ class Appointment {
 
             }
             "time" -> {
+                //TODO fix bug where date get set to 1970
                 //get time from event
                 date = getDateFromEvent(mainActivity, event)
+
 
                 //Calculate into LocalDateTime from Millis
                 localDateTime = ofEpochSecond(date / 1000, 0, OffsetDateTime.now().offset)
