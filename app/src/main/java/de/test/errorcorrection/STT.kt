@@ -8,56 +8,6 @@ import java.util.*
 
 class STT {
 
-/*
-    /**
-     * This method generates a String from users voice input. Used to start dialogue.
-     * @param mainActivity Context
-     */
-    internal fun getUserInputMain(mainActivity: MainActivity) {
-        //Create Intent
-        //val tmp = Intent(mainActivity, RecognizerIntent())
-        val sttIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-        sttIntent.putExtra(
-            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-        )
-        sttIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
-        sttIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now!")
-
-        //could be a possible solution
-        sttIntent.putExtra("REQUEST_CODE", MainActivity.REQUEST_CODE_STT + 1)
-        println("in inputmain: ${MainActivity.REQUEST_CODE_STT}")
-        println("in inputmain: ${sttIntent.extras?.get("REQUEST_CODE")}")
-        mainActivity.setResult(Activity.RESULT_OK, sttIntent)
-        //mainActivity.test.launch(sttIntent)
-
-        //Start STT activity
-        try {
-            //mainActivity.startActivityForResult(sttIntent, MainActivity.REQUEST_CODE_STT)
-            //mainActivity.test.launch(sttIntent)
-            /*
-                var test =
-                mainActivity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { rslt: ActivityResult ->
-                    val textbox = mainActivity.findViewById<EditText>(R.id.et_text_input)
-                    val result =
-                        rslt.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-                    result?.let {
-                        val recognizedText = it[0]
-                        textbox.setText(recognizedText)
-                        mainActivity.logger.writeLog(recognizedText, 1)
-                        mainActivity.handler.handleInput(recognizedText, mainActivity)
-                    }
-                }
-
-             */
-            //mainActivity.test.launch(sttIntent)
-
-        } catch (e: ActivityNotFoundException) {
-            e.printStackTrace()
-        }
-    }
-    */
-
     /**
      * This function
      */
@@ -142,12 +92,46 @@ class STT {
                 MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_ASK -> {
                     mainActivity.reminderEditAsk.launch(sttIntent)
                 }
+                MainActivity.REQUEST_CODE_STT_LIST_NAME -> {
+                    mainActivity.listName.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_CREATE_ITEM -> {
+                    mainActivity.listItem.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_READ -> {
+                    mainActivity.listRead.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_DELETE -> {
+                    mainActivity.listDelete.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_EDIT -> {
+                    mainActivity.listEdit.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_EDIT_FIELD -> {
+                    mainActivity.listEditField.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_EDIT_ITEM_ADD -> {
+                    mainActivity.listEditItemAdd.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_EDIT_ITEM_REPLACE -> {
+                    mainActivity.listEditItemReplace.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_EDIT_ITEM_REPLACE_NEXT -> {
+                    mainActivity.listEditItemReplaceNext.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_EDIT_ITEM_REMOVE -> {
+                    mainActivity.listEditItemRemove.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_EDIT_ITEM_READ -> {
+
+                }
+                MainActivity.REQUEST_CODE_STT_LIST_EDIT_NAME -> {
+                    mainActivity.listEditName.launch(sttIntent)
+                }
             }
         } catch (e: ActivityNotFoundException) {
             e.printStackTrace()
         }
 
     }
-
-
 }

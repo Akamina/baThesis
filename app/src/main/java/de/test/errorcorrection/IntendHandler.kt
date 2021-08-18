@@ -66,7 +66,8 @@ class IntendHandler {
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_NAME
                 )//println("$command $target")
-                "list" -> println("$command $target")
+                //"list" -> println("$command $target")
+                "list" -> mainActivity.askUser("Wie lautet der Name der Liste?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_NAME)//println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
                     mainActivity.askUser(
@@ -81,7 +82,8 @@ class IntendHandler {
                 "appointment" -> mainActivity.appntmnt.askAppointmentEdit(mainActivity)//println("$command $target")
                 //"reminder" -> println("$command $target")
                 "reminder" -> mainActivity.askUser("Wie heißt die Erinnerung die du bearbeiten möchtest?", mainActivity, MainActivity.REQUEST_CODE_STT_REMINDER_EDIT)//println("$command $target")
-                "list" -> println("$command $target")
+                //"list" -> println("$command $target")
+                "list" -> mainActivity.askUser("Welche Liste möchtest du bearbeiten?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_EDIT)//println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
                     mainActivity.askUser(
@@ -100,7 +102,8 @@ class IntendHandler {
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_DELETE
                 )//println("$command $target")
-                "list" -> println("$command $target")
+                //"list" -> println("$command $target")
+                "list" -> mainActivity.askUser("Welche Liste möchtest du löschen?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_DELETE)//println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
                     mainActivity.askUser(
@@ -125,7 +128,8 @@ class IntendHandler {
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_READ
                 )//println("$command $target")
-                "list" -> println("$command $target")
+                //"list" -> println("$command $target")
+                "list" -> mainActivity.askUser("Welche Liste soll ich vorlesen?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_READ)//println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
                     mainActivity.askUser(
@@ -163,6 +167,15 @@ class IntendHandler {
         //Check for read out
         if (text.contains("lies")) return "read"
 
+        return "error"
+    }
+
+    internal fun getListIntend(text: String): String {
+        if (text.contains("lies")) return "read"
+        if (text.contains("hinzufügen") || text.contains("füge")) return "add"
+        if (text.contains("änder") || text.contains("ersetz")) return "replace"
+        if (text.contains("entfern") || text.contains("lösch")) return "delete"
+        if (text.contains("name") || text.contains("Name")) return "name"
         return "error"
     }
 

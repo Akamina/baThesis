@@ -21,25 +21,20 @@ class Logger {
      * @param sender sender of text parameter (User: 1, System: 0)
      */
     internal fun writeLog(text: String, sender: Int) {
-        //TODO change to internal storage
+        //TODO replace deprecated function
         val sd_main = File(Environment.getExternalStorageDirectory(), "test")
         var success = true
         if (!sd_main.exists())
             success = sd_main.mkdir()
-
         if (success) {
             //directory exists or already created
-            //val sd = File("voice_log.txt")
-            //Log.e("DEBUG","Ordner erstellt/existiert")
             val dest = File(sd_main, "voice_log.txt")
-            //println("Pfad: " + dest.path)
             //Get current time and date for the log
             val currentTimeAndDate = org.threeten.bp.LocalDateTime.now()
             var sndr = "USR"
             if (sender == 0) {
                 sndr = "SYS"
             }
-
             try {
                 dest.appendText("$currentTimeAndDate-$sndr:$text\n")
             } catch (e: Exception) {

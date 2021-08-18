@@ -572,7 +572,4 @@ class Appointment {
     internal fun setEvent(id: Long) {
         this.eventID = id
     }
-
-
-
 }
