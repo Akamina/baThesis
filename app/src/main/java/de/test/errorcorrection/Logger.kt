@@ -20,9 +20,10 @@ class Logger {
      * @param text user or system input to write into the log file
      * @param sender sender of text parameter (User: 1, System: 0)
      */
-    internal fun writeLog(text: String, sender: Int) {
+    internal fun writeLog(text: String, sender: Int, mainActivity: MainActivity) {
         //TODO replace deprecated function
-        val sd_main = File(Environment.getExternalStorageDirectory(), "test")
+        //val sd_main = File(Environment.getExternalStorageDirectory(), "test")
+        val sd_main = File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DCIM), "test")
         var success = true
         if (!sd_main.exists())
             success = sd_main.mkdir()
@@ -44,14 +45,16 @@ class Logger {
             //directory creation is not successful
             Log.e("DEBUG", "Erstellen vom Odner fehlgeschlagen")
         }
+        readLog(mainActivity)
     }
 
     /**
      * This function reads the log file and prints it on the console for debugging
      */
-    internal fun readLog() {
+    internal fun readLog(mainActivity: MainActivity) {
         //TODO change to internal storage
-        val sd_main = File(Environment.getExternalStorageDirectory(), "test")
+        //val sd_main = File(Environment.getExternalStorageDirectory(), "test")
+        val sd_main = File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DCIM), "test")
         var success = true
         if (!sd_main.exists())
             success = sd_main.mkdir()

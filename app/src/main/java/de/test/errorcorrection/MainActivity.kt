@@ -146,18 +146,6 @@ open class MainActivity : AppCompatActivity() {
         val btn_tts = findViewById<Button>(R.id.playButton)
         val textbox = findViewById<EditText>(R.id.et_text_input)
 
-        /*
-        //testing purposes:
-        appntmnt.setName("test")
-        appntmnt.setDate("am 9.08 2021")
-        appntmnt.setLocation("zuhause")
-        appntmnt.setTime("19:34 Uhr")
-        println(appntmnt.parseLocalDate("am 9.7 2021"))
-        println(appntmnt.parseLocalTime("19:34 Uhr"))
-
-        //appntmnt.createAppointment(this)
-
-         */
 
         /*
         lst.saveLists<List>(this)
@@ -175,14 +163,15 @@ open class MainActivity : AppCompatActivity() {
             val text = textbox.text.toString().trim()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1")
-                logger.writeLog(text, 0)
+                logger.writeLog(text, 0, this)
             } else {
                 textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
-                logger.writeLog(text, 0)
+                logger.writeLog(text, 0, this)
 
             }
         }
         //Init ActivityResultLauncher
+        //Initial dialogue
         dialogueStart =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -195,11 +184,12 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     handler.handleInput(recognizedText, this)
 
                 }
             }
+        //Get appointments name during creation
         appointmentName =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -210,12 +200,13 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     appntmnt.setName(recognizedText)
                     askUser("An welchem Datum ist der Termin?", this, REQUEST_CODE_STT_DATE)
                 }
             }
+        //Get appointmnets date during creation
         appointmentDate =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -226,7 +217,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     try {
                         appntmnt.parseLocalDate(recognizedText)
@@ -250,6 +241,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        //Get appointmnets time during creation
         appointmentTime =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -260,7 +252,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     try {
                         appntmnt.parseLocalTime(recognizedText)
@@ -281,6 +273,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        //Get appointmnets location during creation
         appointmentLocation =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -291,12 +284,13 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     appntmnt.setLocation(recognizedText)
                     appntmnt.createAppointment(this)
                 }
             }
+        //Delete appointment dialogue, calls delete function
         appointmentDelete =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -307,7 +301,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     appntmnt.deleteAppointment(
                         this,
@@ -315,6 +309,7 @@ open class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+        //Start of edit appointment dialogue
         appointmentEdit =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -325,11 +320,12 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     appntmnt.startEdit(recognizedText, this)
                 }
             }
+        //Get field to edit for appointments
         appointmentEditField =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -340,11 +336,13 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
+                    if (stopDialogue(recognizedText)) return@registerForActivityResult
                     println(recognizedText) //debug
                     appntmnt.continueEdit(recognizedText, this)
                 }
             }
+        //Last step to edit appointment, also sanity checking for dates and time
         appointmentEditNew =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -355,7 +353,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     try {
                         if (appntmnt.field == "date") {
@@ -380,6 +378,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        //Appointment get field during edit, maybe delete this later
         appointmentEditAsk =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -390,14 +389,9 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
-                    if (recognizedText.contains("nein") || recognizedText.contains("Nein") || recognizedText.contains(
-                            "Stop"
-                        ) || recognizedText.contains("stop") || recognizedText.contains("nichts") || recognizedText.contains(
-                            "Nichts"
-                        )
-                    ) {
+                    if (stopDialogue(recognizedText)) {
                         return@registerForActivityResult
                     } else {
                         println(recognizedText) //debug
@@ -405,6 +399,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        //Read out an appointment during edit
         appointmentEditRead =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -415,11 +410,12 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     appntmnt.readAppointmentEdit(this)
                 }
             }
+        //Read out an appointment
         appointmentEditNoName =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -430,12 +426,13 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     appntmnt.setEvent(appntmnt.listSelectedCalendars(recognizedText, this))
                     appntmnt.readAppointment(this, recognizedText)
                 }
             }
+        //Get reminders name during creation
         reminderName =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -446,7 +443,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     rmdr.setName(recognizedText)
                     askUser(
@@ -456,6 +453,7 @@ open class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+        //Get reminders date during creation
         reminderDate =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -466,7 +464,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     try {
                         appntmnt.parseLocalDate(recognizedText)
@@ -491,6 +489,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        //Get reimders time during cration
         reminderTime =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -501,7 +500,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     try {
                         appntmnt.parseLocalTime(recognizedText)
@@ -523,6 +522,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        //Delete a reminder
         reminderDelete =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -533,11 +533,12 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     rmdr.deleteReminder(this, recognizedText)
                 }
             }
+        //Read out a reminder
         reminderRead =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -548,12 +549,13 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     rmdr.setEvent(appntmnt.listSelectedCalendars(recognizedText, this))
                     rmdr.readReminder(this, recognizedText)
                 }
             }
+        //Start editing a reminder
         reminderEdit =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -564,11 +566,12 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     rmdr.startEdit(recognizedText, this)
                 }
             }
+        //Get field to edit
         reminderEditField =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -579,11 +582,13 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
+                    if (stopDialogue(recognizedText)) return@registerForActivityResult
                     println(recognizedText) //debug
                     rmdr.continueEdit(recognizedText, this)
                 }
             }
+        //Read out reminder during edit
         reminderEditRead =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -594,11 +599,12 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     rmdr.readReminderEdit(this)
                 }
             }
+        //Sanity check for date and time during edit and calls final edit function
         reminderEditNew =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -609,7 +615,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     try {
                         if (rmdr.field == "date") {
@@ -635,7 +641,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
+        //Get field to edit, maybe delete later
         reminderEditAsk =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -646,14 +652,9 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
-                    if (recognizedText.contains("nein") || recognizedText.contains("Nein") || recognizedText.contains(
-                            "Stop"
-                        ) || recognizedText.contains("stop") || recognizedText.contains("nichts") || recognizedText.contains(
-                            "Nichts"
-                        )
-                    ) {
+                    if (stopDialogue(recognizedText)) {
                         return@registerForActivityResult
                     } else {
                         println(recognizedText) //debug
@@ -661,6 +662,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        //Get lists name during creation
         listName =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -671,7 +673,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     if (countName < 3) {
                         countName++
@@ -680,6 +682,7 @@ open class MainActivity : AppCompatActivity() {
 
                 }
             }
+        //Get items for the list during creation
         listItem =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -690,7 +693,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     if (stopDialogue(recognizedText)) {
                         return@registerForActivityResult
@@ -698,6 +701,7 @@ open class MainActivity : AppCompatActivity() {
                     lst.addItem(this, recognizedText)
                 }
             }
+        //Reads out the list
         listRead =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -708,7 +712,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     if (countName < 3) {
                         countName++
@@ -716,7 +720,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
+        //Deletes a list
         listDelete =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -727,7 +731,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     if (countName < 3) {
                         countName++
@@ -735,7 +739,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
+        //Start list edit dialogue
         listEdit =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -746,7 +750,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     if (countName < 3) {
                         countName++
@@ -754,7 +758,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
+        //Get field/item to edit
         listEditField =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -765,7 +769,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     if (stopDialogue(recognizedText)) return@registerForActivityResult
                     var field = handler.getListIntend(recognizedText)
@@ -812,7 +816,7 @@ open class MainActivity : AppCompatActivity() {
 
                 }
             }
-
+        //Add item during edit
         listEditItemAdd =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -823,12 +827,12 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     lst.addItemEdit(this, recognizedText)
                 }
             }
-
+        //remive item during edit
         listEditItemRemove =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -839,7 +843,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     if (countName < 3) {
                         countName++
@@ -853,7 +857,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
+        //replace item during edit
         listEditItemReplace =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -864,7 +868,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     //suche gegenstand in liste
                     if (countName < 3) {
@@ -891,6 +895,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        //second step of item replacement
         listEditItemReplaceNext =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -901,7 +906,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     //lst.lists[currentList].removeAt(lst.replaceableIndex)
                     lst.lists[currentList].set(lst.replaceableIndex, recognizedText)
@@ -915,7 +920,7 @@ open class MainActivity : AppCompatActivity() {
 
                 }
             }
-
+        //Edit name during edit
         listEditName =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -926,7 +931,7 @@ open class MainActivity : AppCompatActivity() {
                 rslt?.let {
                     val recognizedText = it[0]
                     textbox.setText(recognizedText)
-                    logger.writeLog(recognizedText, 1)
+                    logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     lst.lists[currentList].set(0, recognizedText)
                     askUser(
@@ -936,6 +941,20 @@ open class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+
+
+        //testing purposes:
+        appntmnt.setName("test")
+        appntmnt.setDate("am 19.8 2021")
+        appntmnt.setLocation("zuhause")
+        appntmnt.setTime("19:34 Uhr")
+        appntmnt.field = "date"
+        //println(appntmnt.parseLocalDate("am 9.7 2021"))
+        //println(appntmnt.parseLocalTime("19:34 Uhr"))
+
+        //appntmnt.createAppointment(this)
+
+        //appntmnt.editAppointment("morgen", this)
 
 
         val btn_stt = findViewById<Button>(R.id.recordButton)
@@ -992,10 +1011,10 @@ open class MainActivity : AppCompatActivity() {
                     null,
                     "tts1"
                 )
-                logger.writeLog(text, 0)
+                logger.writeLog(text, 0, mainActivity)
             } else {
                 mainActivity.textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
-                logger.writeLog(text, 0)
+                logger.writeLog(text, 0, mainActivity)
             }
             var speakingEnd: Boolean = textToSpeechEngine.isSpeaking
             do {

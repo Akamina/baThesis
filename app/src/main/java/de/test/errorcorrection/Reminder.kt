@@ -11,6 +11,7 @@ import org.threeten.bp.LocalDateTime
 import org.threeten.bp.OffsetDateTime
 import java.util.*
 import android.provider.CalendarContract.Reminders
+import org.threeten.bp.temporal.ChronoUnit
 
 
 class Reminder {
@@ -68,7 +69,10 @@ class Reminder {
 
         //Notify user about creation
         mainActivity.askUser(
-            "Die Erinnerung $reminderName am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${dateTime.hour}:${dateTime.minute} Uhr wurde erstellt.",
+            //"Die Erinnerung $reminderName am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${dateTime.hour}:${dateTime.minute} Uhr wurde erstellt.",
+            "Die Erinnerung $reminderName am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${
+                dateTime.toLocalTime().truncatedTo(ChronoUnit.MINUTES)
+            } wurde erstellt.",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_NOTIFY
         )
@@ -303,7 +307,11 @@ class Reminder {
     fun readReminderEdit(mainActivity: MainActivity) {
         println("lies die erinnerung beim bearbeiten")
         if (reminderID == 0.toLong()) {
-            mainActivity.askUser("Wie lautet der Name der Erinnerung den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_READ)
+            mainActivity.askUser(
+                "Wie lautet der Name der Erinnerung den ich vorlesen soll?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_READ
+            )
         } else {
             val eventUri: Uri = mainActivity.appntmnt.getCalendarUriBase()
             //Create array of id, title, start time and location
@@ -345,7 +353,6 @@ class Reminder {
             }
         }
     }
-
 
 
     fun setName(recognizedText: String) {

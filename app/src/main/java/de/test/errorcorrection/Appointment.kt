@@ -10,6 +10,7 @@ import org.threeten.bp.format.DateTimeFormatter
 import java.util.*
 import android.content.ContentUris
 import org.threeten.bp.LocalDateTime.ofEpochSecond
+import org.threeten.bp.temporal.ChronoUnit
 
 
 class Appointment {
@@ -18,7 +19,7 @@ class Appointment {
     lateinit private var date: String
     lateinit private var time: String
     lateinit private var location: String
-    private var eventID : Long = 0
+    private var eventID: Long = 0
     internal lateinit var field: String
 
     /**
@@ -56,7 +57,10 @@ class Appointment {
             DateTimeUtils.toZoneId(TimeZone.getDefault())
         )
         mainActivity.askUser(
-            "Der Termin $name am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${dateTime.hour}:${dateTime.minute} Uhr mit dem Ort $location wurde erstellt.",
+            //"Der Termin $name am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${dateTime.hour}:${dateTime.minute} Uhr mit dem Ort $location wurde erstellt.",
+            "Der Termin $name am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${
+                dateTime.toLocalTime().truncatedTo(ChronoUnit.MINUTES)
+            } mit dem Ort $location wurde erstellt.",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_NOTIFY
         )
@@ -283,14 +287,19 @@ class Appointment {
             "date" -> {
                 //get date from event
                 date = getDateFromEvent(mainActivity, event)
+                println("Millis: $date")
                 //Calculate into LocalDateTime from millis
                 localDateTime = ofEpochSecond(date / 1000, 0, OffsetDateTime.now().offset)
+                println(localDateTime)
                 var localDate = parseLocalDate(text)
+                println("Neues Date: $localDate")
                 //Update date
                 localDateTime = localDateTime.withYear(localDate.year)
                 localDateTime = localDateTime.withMonth(localDate.monthValue)
                 localDateTime = localDateTime.withDayOfMonth(localDate.dayOfMonth)
 
+                println("Updated date $localDateTime")
+                println(localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
                 //TODO add time from date here to localDateTime
 
                 newEvent.put(
@@ -310,14 +319,19 @@ class Appointment {
                 //TODO fix bug where date get set to 1970
                 //get time from event
                 date = getDateFromEvent(mainActivity, event)
-
+                println("Millis: $date")
 
                 //Calculate into LocalDateTime from Millis
                 localDateTime = ofEpochSecond(date / 1000, 0, OffsetDateTime.now().offset)
                 var localTime = parseLocalTime(text)
+                println(localDateTime)
+                println("Neues Zeit: $localTime")
+
                 //Update time
                 localDateTime = localDateTime.withHour(localTime.hour)
                 localDateTime = localDateTime.withMinute(localTime.minute)
+                println("Updated date $localDateTime")
+                println(localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
 
                 newEvent.put(
                     CalendarContract.Events.DTSTART,
@@ -457,8 +471,13 @@ class Appointment {
     internal fun readAppointmentEdit(mainActivity: MainActivity) {
         println("Termin vorlesen beim bearbeiten")
         if (eventID == 0.toLong()) {
-            mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_READ)
+            mainActivity.askUser(
+                "Wie lautet der Name des Termins den ich vorlesen soll?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_READ
+            )
         } else {
+            //TODO in externe funktion schreiben
             val eventUri: Uri = getCalendarUriBase()
             //Create array of id, title, start time and location
             val projection = arrayOf("_id", "title", "dtstart", "eventLocation")
@@ -507,10 +526,15 @@ class Appointment {
      */
     fun readAppointment(mainActivity: MainActivity, text: String) {
         if (eventID == 0.toLong()) {
-            mainActivity.askUser("Der Termin $text konnte nicht gefunden werden", mainActivity, MainActivity.REQUEST_CODE_STT_NOTIFY)
+            mainActivity.askUser(
+                "Der Termin $text konnte nicht gefunden werden",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_NOTIFY
+            )
             //mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME)
-        //mainActivity.waitForTTS(mainActivity)
+            //mainActivity.waitForTTS(mainActivity)
         } else {
+            //TODO in externe funktion schreiben
             val eventUri: Uri = getCalendarUriBase()
             //Create array of id, title, start time and location
             val projection = arrayOf("_id", "title", "dtstart", "eventLocation")
