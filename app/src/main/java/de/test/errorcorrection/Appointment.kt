@@ -11,6 +11,7 @@ import java.util.*
 import android.content.ContentUris
 import org.threeten.bp.LocalDateTime.ofEpochSecond
 import org.threeten.bp.temporal.ChronoUnit
+import kotlin.random.Random
 
 
 class Appointment {
@@ -21,6 +22,10 @@ class Appointment {
     lateinit private var location: String
     private var eventID: Long = 0
     internal lateinit var field: String
+    private val errorName = mutableListOf<String>("lunch", "dinner", "dentist", "doctor")
+    private val errorDate = mutableListOf<LocalDate>(LocalDate.of(2020, 10, 20), LocalDate.of(2021, 10, 2))
+    private val errorTime = mutableListOf<LocalTime>(LocalTime.of(12, 45), LocalTime.of(11, 33), LocalTime.of(15, 5), LocalTime.of(22, 45))
+    private val errorLocation = mutableListOf<String>("Hannover", "Hamburg", "Berlin", "Belgium")
 
     /**
      * This function creates an event and adds it to the default calendar
@@ -36,8 +41,34 @@ class Appointment {
 
         //Select default calendar
         event.put(CalendarContract.Events.CALENDAR_ID, 1)
+        var dateTime = getDateTimeFromString(date, time)
+
+        //Get error here
+        var rng = Random
+        println(rng.nextInt(1))
+        var index = rng.nextInt(4)
+        when (index) {
+            0 -> {
+                name = errorName[rng.nextInt(errorName.size)]
+            }
+            1 -> {
+                var dte = errorDate[rng.nextInt(errorDate.size)]
+                dateTime = dateTime.withYear(dte.year)
+                dateTime = dateTime.withMonth(dte.monthValue)
+                dateTime = dateTime.withDayOfMonth(dte.dayOfMonth)
+            }
+            2 -> {
+                var tme = errorTime[rng.nextInt(errorTime.size)]
+                dateTime = dateTime.withHour(tme.hour)
+                dateTime = dateTime.withMinute(tme.minute)
+            }
+            3 -> {
+                location = errorLocation[rng.nextInt(errorLocation.size)]
+            }
+        }
+
         val tm =
-            getDateTimeFromString(date, time).toInstant(OffsetDateTime.now().offset).toEpochMilli()
+            dateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli()
 
         //Add data and details to event
         event.put(CalendarContract.Events.TITLE, name)
@@ -52,15 +83,24 @@ class Appointment {
         mainActivity.contentResolver.insert(baseUri, event)
 
         println("added event")
-        var dateTime = LocalDateTime.ofInstant(
+        //Maybe redundant
+        dateTime = LocalDateTime.ofInstant(
             Instant.ofEpochMilli(tm),
             DateTimeUtils.toZoneId(TimeZone.getDefault())
         )
         mainActivity.askUser(
             //"Der Termin $name am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${dateTime.hour}:${dateTime.minute} Uhr mit dem Ort $location wurde erstellt.",
-            "Der Termin $name am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${
+            /*          "Der Termin $name am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${
+                          dateTime.toLocalTime().truncatedTo(ChronoUnit.MINUTES)
+                      } mit dem Ort $location wurde erstellt.",
+          */
+
+
+            "The appointment $name on ${dateTime.dayOfMonth}. ${dateTime.month} ${dateTime.year} at ${
                 dateTime.toLocalTime().truncatedTo(ChronoUnit.MINUTES)
-            } mit dem Ort $location wurde erstellt.",
+            } with the location $location was created. ",
+
+
             mainActivity,
             MainActivity.REQUEST_CODE_STT_NOTIFY
         )
@@ -73,7 +113,8 @@ class Appointment {
      */
     internal fun askName(mainActivity: MainActivity) {
         println("Erstelle Termin")
-        val s = "Wie lautet der Name des Termins?"
+        //val s = "Wie lautet der Name des Termins?"
+        val s = "What is the name of the appointment?"
         mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_NAME)
         //Thread.sleep(3000) //do i need this?
     }
@@ -89,24 +130,34 @@ class Appointment {
         var formatter: DateTimeFormatter
         var dte = text
         //Checking for natural language here
-        if (text.contains("übermorgen") || text.contains("Übermorgen")) {
+        if (text.contains("übermorgen") || text.contains("Übermorgen") || text.contains("the day after tomorrow")) {
             return localDate.plusDays(2)
         }
-        if (text.contains("heute") || text.contains("Heute")) {
+        if (text.contains("heute") || text.contains("Heute") || text.contains("today")) {
             return localDate
         }
-        if (text.contains("morgen") || text.contains("Morgen")) {
+        if (text.contains("morgen") || text.contains("Morgen") || text.contains("tomorrow")) {
             return localDate.plusDays(1)
         }
         //Parsing date from string
 
+        /*
         if (dte.contains("am")) dte = dte.split("am ")[1]
         if (dte.contains("an dem")) dte = dte.split("an dem ")[1]
         if (dte.indexOf('.') <= 1) dte = "0$dte"
 
+
+         */
         //Check for spoken out month
         if (containsMonthName(text)) {
-            formatter = DateTimeFormatter.ofPattern("dd. MMMM yyyy", Locale.GERMANY)
+            //formatter = DateTimeFormatter.ofPattern("dd. MMMM yyyy", Locale.GERMAN)
+            formatter = if (text.contains("of")) {
+                dte = dte.replace("of ", "")
+                DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.ENGLISH)
+            } else {
+                DateTimeFormatter.ofPattern("MMMM dd yyyy", Locale.ENGLISH)
+            }
+            dte = dte.replace("(?<=\\d)(st|nd|rd|th)".toRegex(), "")
             localDate = LocalDate.parse(dte, formatter)
 
         } else {
@@ -127,12 +178,12 @@ class Appointment {
      * @return If the text contains only digits as month false is returned
      */
     private fun containsMonthName(text: String): Boolean {
-        return text.contains("Januar") || text.contains("Februar") || text.contains("März") || text.contains(
+        return text.contains("January") || text.contains("February") || text.contains("March") || text.contains(
             "April"
-        ) || text.contains("Mai") || text.contains("Juni") || text.contains("Juli") || text.contains(
+        ) || text.contains("May") || text.contains("June") || text.contains("July") || text.contains(
             "August"
-        ) || text.contains("September") || text.contains("Oktober") || text.contains("November") || text.contains(
-            "Dezember"
+        ) || text.contains("September") || text.contains("October") || text.contains("November") || text.contains(
+            "December"
         )
     }
 
@@ -190,7 +241,8 @@ class Appointment {
         var tmp = 0
         if (eventID == tmp.toLong()) {
             mainActivity.askUser(
-                "Der Termin $recognizedText konnte nicht gefunden werden.",
+                //"Der Termin $recognizedText konnte nicht gefunden werden.",
+                "The appointment $recognizedText could not be found.",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_NOTIFY
             )
@@ -204,9 +256,9 @@ class Appointment {
         iNumRowsDeleted = mainActivity.getContentResolver().delete(eventUri, null, null)
 
         println("Rows deleted: $iNumRowsDeleted")
-        //return iNumRowsDeleted
         mainActivity.askUser(
-            "Der Termin $recognizedText wurde entfernt",
+            //"Der Termin $recognizedText wurde entfernt",
+            "The appointment $recognizedText was removed",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_NOTIFY
         )
@@ -223,14 +275,16 @@ class Appointment {
         var tmp = 0
         if (eventID == tmp.toLong()) {
             mainActivity.askUser(
-                "Der Termin $text konnte nicht gefunden werden.",
+                //"Der Termin $text konnte nicht gefunden werden.",
+                "The appointment $text could not be found.",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_NOTIFY
             )
         } else {
             //Ask for field
             mainActivity.askUser(
-                "Was soll geändert werden?",
+                //"Was soll geändert werden?",
+                "What should be changed?",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD
             )
@@ -246,7 +300,8 @@ class Appointment {
         field = mainActivity.handler.getField(text, mainActivity)
         if (field == "error") {
             mainActivity.askUser(
-                "Was soll geändert werden?",
+                //"Was soll geändert werden?",
+                "What should be changed?",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD
             )
@@ -254,7 +309,8 @@ class Appointment {
             readAppointmentEdit(mainActivity)
         } else {
             mainActivity.askUser(
-                "Wie lautet die Änderung?",
+                //"Wie lautet die Änderung?",
+                "What's the change?",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW
             )
@@ -279,7 +335,8 @@ class Appointment {
                 iNumRowsUpdated =
                     mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
-                    "Ich habe den Namen auf $text geändert. Möchtest du noch etwas ändern?",
+                    //"Ich habe den Namen auf $text geändert. Möchtest du noch etwas ändern?",
+                    "I changed the name to $text. Would you like to change anything else?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK
                 )
@@ -309,7 +366,8 @@ class Appointment {
                 iNumRowsUpdated =
                     mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
-                    "Ich habe das Datum auf $localDate geändert. Möchtest du noch etwas ändern?",
+                    //"Ich habe das Datum auf $localDate geändert. Möchtest du noch etwas ändern?",
+                    "I changed the date to $localDate. Would you like to change anything else?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK
                 )
@@ -340,7 +398,8 @@ class Appointment {
                 iNumRowsUpdated =
                     mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
-                    "Ich habe die Zeit auf $localTime geändert. Möchtest du noch etwas ändern?",
+                    //"Ich habe die Zeit auf $localTime geändert. Möchtest du noch etwas ändern?",
+                    "I changed the time to $localTime. Would you like to change anything?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK
                 )
@@ -351,14 +410,12 @@ class Appointment {
                 iNumRowsUpdated =
                     mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
-                    "Ich habe den Ort auf $text geändert. Möchtest du noch etwas ändern?",
+                    //"Ich habe den Ort auf $text geändert. Möchtest du noch etwas ändern?",
+                    "I changed the location to $text. Would you like to change anything?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_ASK
                 )
 
-
-            }
-            else -> {
 
             }
             //TODO bug detected: date was messed up somehow during changing location
@@ -416,7 +473,8 @@ class Appointment {
      */
     fun askAppointmentDelete(mainActivity: MainActivity) {
         println("Lösche Termin")
-        val s = "Wie lautet der Name des Termins, den du löschen möchtest?"
+        //val s = "Wie lautet der Name des Termins, den du löschen möchtest?"
+        val s = "What is the name of the appointment that you want to delete?"
         mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_DELETE_APPOINTMENT)
     }
 
@@ -426,7 +484,8 @@ class Appointment {
      */
     fun askAppointmentEdit(mainActivity: MainActivity) {
         println("Bearbeite Termin")
-        val s = "Wie lautet der Name des Termins den du bearbeiten möchtest?"
+        //val s = "Wie lautet der Name des Termins den du bearbeiten möchtest?"
+        val s = "What is the name of the appointment you want to edit?"
         mainActivity.askUser(s, mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT)
     }
 
@@ -472,7 +531,8 @@ class Appointment {
         println("Termin vorlesen beim bearbeiten")
         if (eventID == 0.toLong()) {
             mainActivity.askUser(
-                "Wie lautet der Name des Termins den ich vorlesen soll?",
+                //"Wie lautet der Name des Termins den ich vorlesen soll?",
+                "What is the name of the appointment I should read out?",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_READ
             )
@@ -512,7 +572,8 @@ class Appointment {
                     ofEpochSecond(calDate.toLong() / 1000, 0, OffsetDateTime.now().offset)
                 //mainActivity.askUser("Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate().dayOfMonth}. ${localDate.toLocalDate().month} ${localDate.toLocalDate().year} um ${localDate.toLocalTime().hour}:${localDate.toLocalTime().minute} Uhr $calLocation statt", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
                 mainActivity.askUser(
-                    "Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} $calLocation statt. Möchtest du noch etwas ändern?",
+                    //"Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} $calLocation statt. Möchtest du noch etwas ändern?",
+                    "The name of the appointment is $calName and it will take place on ${localDate.toLocalDate()} at ${localDate.toLocalTime()} $calLocation. Would you like to change something?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD
                 )
@@ -527,12 +588,11 @@ class Appointment {
     fun readAppointment(mainActivity: MainActivity, text: String) {
         if (eventID == 0.toLong()) {
             mainActivity.askUser(
-                "Der Termin $text konnte nicht gefunden werden",
+                //"Der Termin $text konnte nicht gefunden werden",
+                "The appointment $text could not be found",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_NOTIFY
             )
-            //mainActivity.askUser("Wie lautet der Name des Termins den ich vorlesen soll?", mainActivity, MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME)
-            //mainActivity.waitForTTS(mainActivity)
         } else {
             //TODO in externe funktion schreiben
             val eventUri: Uri = getCalendarUriBase()
@@ -569,7 +629,8 @@ class Appointment {
                     ofEpochSecond(calDate.toLong() / 1000, 0, OffsetDateTime.now().offset)
                 //mainActivity.askUser("Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate().dayOfMonth}. ${localDate.toLocalDate().month} ${localDate.toLocalDate().year} um ${localDate.toLocalTime().hour}:${localDate.toLocalTime().minute} Uhr $calLocation statt", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
                 mainActivity.askUser(
-                    "Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} $calLocation statt.",
+                    //"Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} $calLocation statt.",
+                    "The name of the appointment is $calName and it will take place on ${localDate.toLocalDate()} at ${localDate.toLocalTime()} $calLocation.",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_NOTIFY
                 )

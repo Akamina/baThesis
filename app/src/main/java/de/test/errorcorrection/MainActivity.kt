@@ -63,7 +63,7 @@ open class MainActivity : AppCompatActivity() {
             this@MainActivity
         ) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                textToSpeechEngine.language = Locale.GERMANY
+                textToSpeechEngine.language = Locale.US
             }
         }
     }
@@ -72,7 +72,6 @@ open class MainActivity : AppCompatActivity() {
     internal lateinit var permissions: Permissions
     internal lateinit var handler: IntendHandler
     internal lateinit var stt: STT
-    internal lateinit var tts: TTS
     internal lateinit var appntmnt: Appointment
     internal lateinit var rmdr: Reminder
     internal lateinit var lst: List
@@ -133,7 +132,6 @@ open class MainActivity : AppCompatActivity() {
         permissions = Permissions()
         handler = IntendHandler()
         stt = STT()
-        tts = TTS()
         appntmnt = Appointment()
         rmdr = Reminder()
         lst = List()
@@ -143,22 +141,16 @@ open class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main);
 
         //get reference for tts button
-        val btn_tts = findViewById<Button>(R.id.playButton)
+        //val btn_tts = findViewById<Button>(R.id.playButton)
         val textbox = findViewById<EditText>(R.id.et_text_input)
 
 
-        /*
-        lst.saveLists<List>(this)
-        lst.lists = mutableListOf<MutableList<String>>()
-        lst.lists.add(mutableListOf<String>("test", "1", "2", "3"))
-        lst.saveLists<List>(this)
-
-         */
         var loadedLst = lst.loadLists<List>(this)
         if (loadedLst != null) {
             lst = loadedLst
         }
 
+        /*
         btn_tts.setOnClickListener {
             val text = textbox.text.toString().trim()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -170,6 +162,8 @@ open class MainActivity : AppCompatActivity() {
 
             }
         }
+
+         */
         //Init ActivityResultLauncher
         //Initial dialogue
         dialogueStart =
@@ -203,7 +197,8 @@ open class MainActivity : AppCompatActivity() {
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     appntmnt.setName(recognizedText)
-                    askUser("An welchem Datum ist der Termin?", this, REQUEST_CODE_STT_DATE)
+                    //askUser("An welchem Datum ist der Termin?", this, REQUEST_CODE_STT_DATE)
+                    askUser("What date is the appointment?", this, REQUEST_CODE_STT_DATE)
                 }
             }
         //Get appointmnets date during creation
@@ -223,8 +218,8 @@ open class MainActivity : AppCompatActivity() {
                         appntmnt.parseLocalDate(recognizedText)
                         appntmnt.setDate(recognizedText)
                         countDate = 0
-                        askUser(
-                            "Um welche Uhrzeit ist der Termin?",
+                        //askUser("Um welche Uhrzeit ist der Termin?",
+                        askUser("What time is the appointment?",
                             this,
                             REQUEST_CODE_STT_TIME
                         )
@@ -233,7 +228,8 @@ open class MainActivity : AppCompatActivity() {
                         countDate++
                         if (countDate < 3) {
                             askUser(
-                                "Das habe ich nicht richtig verstanden. An welchem Datum ist der Termin?",
+                                //"Das habe ich nicht richtig verstanden. An welchem Datum ist der Termin?",
+                                "I did not really get that. What date is the appointment?",
                                 this,
                                 REQUEST_CODE_STT_DATE
                             )
@@ -241,7 +237,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-        //Get appointmnets time during creation
+        //Get appointments time during creation
         appointmentTime =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -259,14 +255,16 @@ open class MainActivity : AppCompatActivity() {
                         appntmnt.setTime(recognizedText)
                         countTime = 0
                         askUser(
-                            "Wo findet der Termin statt?", this,
+                            //"Wo findet der Termin statt?", this,
+                            "Where does the appointment take place?", this,
                             REQUEST_CODE_STT_LOCATION
                         )
                     } catch (e: Exception) {
                         e.printStackTrace()
                         countTime++
                         if (countTime < 3) askUser(
-                            "Das habe ich nicht verstanden. Um welche Uhrzeit ist der Termin?",
+                            //"Das habe ich nicht verstanden. Um welche Uhrzeit ist der Termin?",
+                            "I did not understand. What time is the appointment?",
                             this,
                             REQUEST_CODE_STT_TIME
                         )
@@ -370,7 +368,8 @@ open class MainActivity : AppCompatActivity() {
                         countEdit++
                         if (countEdit < 3) {
                             askUser(
-                                "Das habe ich nicht richtig verstanden. Wie lautet die Änderung?",
+                                //"Das habe ich nicht richtig verstanden. Wie lautet die Änderung?",
+                                "I did not really get that. What's the change?",
                                 this,
                                 REQUEST_CODE_STT_EDIT_APPOINTMENT_NEW
                             )
@@ -447,7 +446,8 @@ open class MainActivity : AppCompatActivity() {
                     println(recognizedText) //debug
                     rmdr.setName(recognizedText)
                     askUser(
-                        "An welchem Datum soll ich dich erinnern?",
+                        //"An welchem Datum soll ich dich erinnern?",
+                        "What date should I remind you?",
                         this,
                         REQUEST_CODE_STT_REMINDER_DATE
                     )
@@ -471,7 +471,8 @@ open class MainActivity : AppCompatActivity() {
                         countDate = 0
                         rmdr.setDate(recognizedText)
                         askUser(
-                            "Um wieviel Uhr soll ich dich erinnern?",
+                            //"Um wieviel Uhr soll ich dich erinnern?",
+                            "What time should I remind you?",
                             this,
                             REQUEST_CODE_STT_REMINDER_TIME
                         )
@@ -481,7 +482,8 @@ open class MainActivity : AppCompatActivity() {
                         countDate++
                         if (countDate < 3) {
                             askUser(
-                                "Das habe ich nicht richtig verstanden. An welchem Datum soll ich dich erinnern?",
+                                //"Das habe ich nicht richtig verstanden. An welchem Datum soll ich dich erinnern?",
+                                "I didn't understand that correctly. What date should I remind you?",
                                 this,
                                 REQUEST_CODE_STT_REMINDER_DATE
                             )
@@ -506,7 +508,6 @@ open class MainActivity : AppCompatActivity() {
                         appntmnt.parseLocalTime(recognizedText)
                         countTime = 0
                         rmdr.setTime(recognizedText)
-                        //askUser("Um wieviel Uhr soll ich dich erinnern?", this, REQUEST_CODE_STT_REMINDER_TIME)
                         rmdr.createReminder(this)
 
                     } catch (e: Exception) {
@@ -514,7 +515,8 @@ open class MainActivity : AppCompatActivity() {
                         countTime++
                         if (countTime < 3) {
                             askUser(
-                                "Das habe ich nicht richtig verstanden. Um wieviel Uhr soll ich dich erinnern?",
+                                //"Das habe ich nicht richtig verstanden. Um wieviel Uhr soll ich dich erinnern?",
+                                "I didn't understand that correctly. What time should I remind you?",
                                 this,
                                 REQUEST_CODE_STT_REMINDER_TIME
                             )
@@ -626,14 +628,14 @@ open class MainActivity : AppCompatActivity() {
                         }
                         countEdit = 0
                         println(recognizedText) //debug
-                        //handler.getField(recognizedText,this)
                         rmdr.editReminder(recognizedText, this)
                     } catch (e: Exception) {
                         e.printStackTrace()
                         countEdit++
                         if (countEdit < 3) {
                             askUser(
-                                "Das habe ich nicht richtig verstanden. Wie lautet die Änderung?",
+                                //"Das habe ich nicht richtig verstanden. Wie lautet die Änderung?",
+                                "I didn't understand that correctly. What's the change?",
                                 this,
                                 REQUEST_CODE_STT_REMINDER_EDIT_NEW
                             )
@@ -775,7 +777,8 @@ open class MainActivity : AppCompatActivity() {
                     var field = handler.getListIntend(recognizedText)
                     if (field.contains("error")) {
                         askUser(
-                            "Das habe ich nicht richtig verstanden, was soll ich machen?",
+                            //"Das habe ich nicht richtig verstanden, was soll ich machen?",
+                            "I didn't understand that correctly, what should I do?",
                             this,
                             REQUEST_CODE_STT_LIST_EDIT_FIELD
                         )
@@ -786,28 +789,32 @@ open class MainActivity : AppCompatActivity() {
                         }
                         "replace" -> {
                             askUser(
-                                "Welcher Gegenstand soll ersetzt werden?",
+                                //"Welcher Gegenstand soll ersetzt werden?",
+                                "Which item should be replaced?",
                                 this,
                                 REQUEST_CODE_STT_LIST_EDIT_ITEM_REPLACE
                             )
                         }
                         "add" -> {
                             askUser(
-                                "Was möchtest du hinzufügen?",
+                                //"Was möchtest du hinzufügen?",
+                                "What do you want to add?",
                                 this,
                                 REQUEST_CODE_STT_LIST_EDIT_ITEM_ADD
                             )
                         }
                         "delete" -> {
                             askUser(
-                                "Was möchtest du von der Liste entfernen?",
+                                "What do you want to remove from the list?",
+                                //"Was möchtest du von der Liste entfernen?",
                                 this,
                                 REQUEST_CODE_STT_LIST_EDIT_ITEM_REMOVE
                             )
                         }
                         "name" -> {
                             askUser(
-                                "Wie lautet der neue Name der Liste?",
+                                //"Wie lautet der neue Name der Liste?",
+                                "What's the new name of the list?",
                                 this,
                                 REQUEST_CODE_STT_LIST_EDIT_NAME
                             )
@@ -850,7 +857,8 @@ open class MainActivity : AppCompatActivity() {
                         lst.removeItem(this, recognizedText)
                     } else {
                         askUser(
-                            "Was möchtest du bearbeiten?",
+                            //"Was möchtest du bearbeiten?",
+                            "What do you want to edit?",
                             this,
                             REQUEST_CODE_STT_LIST_EDIT_FIELD
                         )
@@ -880,14 +888,16 @@ open class MainActivity : AppCompatActivity() {
                             lst.replaceableIndex = i
                             lst.replaceable = recognizedText
                             askUser(
-                                "Durch was soll $recognizedText ersetzt werden?",
+                                //"Durch was soll $recognizedText ersetzt werden?",
+                                "What should $recognizedText be replaced by?",
                                 this,
                                 REQUEST_CODE_STT_LIST_EDIT_ITEM_REPLACE_NEXT
                             )
                         } else {
                             //item not found
                             askUser(
-                                "Ich habe $recognizedText nicht in der Liste gefunden. Was soll ersetzt werden?",
+                                //"Ich habe $recognizedText nicht in der Liste gefunden. Was soll ersetzt werden?",
+                                "I couldn't find $recognizedText in the list. What should be replaced?",
                                 this,
                                 REQUEST_CODE_STT_LIST_EDIT_ITEM_REPLACE
                             )
@@ -908,11 +918,10 @@ open class MainActivity : AppCompatActivity() {
                     textbox.setText(recognizedText)
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
-                    //lst.lists[currentList].removeAt(lst.replaceableIndex)
                     lst.lists[currentList].set(lst.replaceableIndex, recognizedText)
                     askUser(
-                        "Ich habe ${lst.replaceable} durch $recognizedText ersetzt. Möchtest du noch etwas bearbeiten?",
-                        this,
+                        //"Ich habe ${lst.replaceable} durch $recognizedText ersetzt. Möchtest du noch etwas bearbeiten?",
+                        "I replaced ${lst.replaceable} with $recognizedText. Would you like to edit something else?",                        this,
                         REQUEST_CODE_STT_LIST_EDIT_FIELD
                     )
                     lst.replaceable = ""
@@ -935,27 +944,13 @@ open class MainActivity : AppCompatActivity() {
                     println(recognizedText) //debug
                     lst.lists[currentList].set(0, recognizedText)
                     askUser(
-                        "Ich habe den Namen der Liste auf $recognizedText geändert. Was möchtest du noch bearbeiten?",
+                        //"Ich habe den Namen der Liste auf $recognizedText geändert. Was möchtest du noch bearbeiten?",
+                        "I changed the name of the list to $recognizedText. What else do you want to edit?",
                         this,
                         REQUEST_CODE_STT_LIST_EDIT_FIELD
                     )
                 }
             }
-
-
-        //testing purposes:
-        appntmnt.setName("test")
-        appntmnt.setDate("am 19.8 2021")
-        appntmnt.setLocation("zuhause")
-        appntmnt.setTime("19:34 Uhr")
-        appntmnt.field = "date"
-        //println(appntmnt.parseLocalDate("am 9.7 2021"))
-        //println(appntmnt.parseLocalTime("19:34 Uhr"))
-
-        //appntmnt.createAppointment(this)
-
-        //appntmnt.editAppointment("morgen", this)
-
 
         val btn_stt = findViewById<Button>(R.id.recordButton)
 
@@ -974,7 +969,7 @@ open class MainActivity : AppCompatActivity() {
             "Stop"
         ) || recognizedText.contains("stop") || recognizedText.contains("nichts") || recognizedText.contains(
             "Nichts"
-        ))
+        ) || recognizedText.contains("no") || recognizedText.contains("No") || recognizedText.contains("nothing")  || recognizedText.contains("Nothing"))
     }
 
     /**

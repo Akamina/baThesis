@@ -5,12 +5,15 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.io.Serializable
 import java.lang.Exception
+import kotlin.random.Random
 
 class List : Serializable {
     internal var lists: MutableList<MutableList<String>> =
-        mutableListOf<MutableList<String>>()//MutableList<MutableList<String>>
+        mutableListOf<MutableList<String>>()
     internal var replaceable: String = ""
     internal var replaceableIndex: Int = -1
+    private var errorItems = mutableListOf<String>("Video game", "TV Magazine", "Apples", "Apple Pie", "Butter", "Eggs", "Cheese", "Milk")
+    private var rng = Random
 
     /**
      * This function checks if the name is already taken and notifies the user if it is taken. Otherwise the list will be created and the user gets asked for items.
@@ -22,7 +25,8 @@ class List : Serializable {
         for (item in lists) {
             if (item[0] == text) {
                 mainActivity.askUser(
-                    "Der Name wird bereits verwendet. Wie soll die Liste heißen?",
+                    //"Der Name wird bereits verwendet. Wie soll die Liste heißen?",
+                    "The name is already in use. What should the list be called?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_LIST_NAME
                 )
@@ -34,7 +38,8 @@ class List : Serializable {
         lists.add(lst)
         mainActivity.currentList = lists.indexOf(lst)
         mainActivity.askUser(
-            "Ich habe die Liste $text erstellt. Was soll hinzugefügt werden?",
+            //"Ich habe die Liste $text erstellt. Was soll hinzugefügt werden?",
+            "I created the $text list. What should I add?",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_LIST_CREATE_ITEM
         )
@@ -47,12 +52,23 @@ class List : Serializable {
      * @param text User input
      */
     internal fun addItem(mainActivity: MainActivity, text: String) {
-        lists[mainActivity.currentList].add(text)
-        mainActivity.askUser(
-            "Ich habe $text der Liste hinzugefügt. Möchtest du noch etwas hinzufügen?",
-            mainActivity,
-            MainActivity.REQUEST_CODE_STT_LIST_CREATE_ITEM
-        )
+        if (lists[mainActivity.currentList].size == 1) {
+            lists[mainActivity.currentList].add(errorItems[rng.nextInt(errorItems.size)])
+            mainActivity.askUser(
+                "I've added ${lists[mainActivity.currentList][1]} to the list. Anything else you want to add?",
+                //"Ich habe $text der Liste hinzugefügt. Möchtest du noch etwas hinzufügen?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_LIST_CREATE_ITEM
+            )
+        } else {
+            lists[mainActivity.currentList].add(text)
+            mainActivity.askUser(
+                "I've added $text to the list. Anything else you want to add?",
+                //"Ich habe $text der Liste hinzugefügt. Möchtest du noch etwas hinzufügen?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_LIST_CREATE_ITEM
+            )
+        }
         saveLists<List>(mainActivity)
     }
 
@@ -67,7 +83,8 @@ class List : Serializable {
         lists.removeAt(mainActivity.currentList)
         mainActivity.currentList = -1
         mainActivity.askUser(
-            "Die Liste $text wurde entfernt.",
+            //"Die Liste $text wurde entfernt.",
+            "The $text list has been removed.",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_NOTIFY
         )
@@ -88,7 +105,8 @@ class List : Serializable {
         } else {
             read(mainActivity, lists[mainActivity.currentList])
             mainActivity.askUser(
-                "Was möchtest du sonst bearbeiten?",
+                //"Was möchtest du sonst bearbeiten?",
+                "What else do you want to edit?",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_LIST_EDIT_FIELD
             )
@@ -103,7 +121,8 @@ class List : Serializable {
     private fun read(mainActivity: MainActivity, lst: MutableList<String>) {
         var i = 0
         mainActivity.askUser(
-            "Der Name der Liste lautet ${lst[i]}",
+            //"Der Name der Liste lautet ${lst[i]}",
+            "The name of the list is ${lst[i]}",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_NOTIFY
         )
@@ -136,7 +155,8 @@ class List : Serializable {
         }
         return if (mainActivity.currentList == -1) {
             mainActivity.askUser(
-                "Die Liste $text konnte nicht gefunden werden.",
+                //"Die Liste $text konnte nicht gefunden werden.",
+                "The list $text could not be found.",
                 mainActivity,
                 requestCode
             )
@@ -153,7 +173,8 @@ class List : Serializable {
         if (findList(mainActivity, text, MainActivity.REQUEST_CODE_STT_LIST_EDIT)) return
         mainActivity.countName = 0
         mainActivity.askUser(
-            "Was willst du ändern?",
+            //"Was willst du ändern?",
+            "What do you want to change?",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_LIST_EDIT_FIELD
         )
@@ -167,7 +188,8 @@ class List : Serializable {
     internal fun addItemEdit(mainActivity: MainActivity, text: String) {
         lists[mainActivity.currentList].add(text)
         mainActivity.askUser(
-            "Ich habe $text der Liste hinzugefügt. Möchtest du noch etwas ändern?",
+            //"Ich habe $text der Liste hinzugefügt. Möchtest du noch etwas ändern?",
+            "I've added $text to the list. Would you like to change anything?",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_LIST_EDIT_FIELD
         )
@@ -183,7 +205,8 @@ class List : Serializable {
         var i = lists[mainActivity.currentList].indexOf(recognizedText)
         if (i < 0) {
             mainActivity.askUser(
-                "Den Gegenstand $recognizedText habe ich nicht gefunden. Was soll geändert werden?",
+                //"Den Gegenstand $recognizedText habe ich nicht gefunden. Was soll geändert werden?",
+                "I did not find the item $recognizedText. What should be changed?",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_LIST_EDIT_ITEM_REMOVE
             )
@@ -192,7 +215,8 @@ class List : Serializable {
         mainActivity.countName = 0
         lists[mainActivity.currentList].removeAt(i)
         mainActivity.askUser(
-            "Ich habe $recognizedText von der Liste entfernt. Was möchtest du noch bearbeiten?",
+            //"Ich habe $recognizedText von der Liste entfernt. Was möchtest du noch bearbeiten?",
+            "I removed $recognizedText from the list. What else do you want to edit?",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_LIST_EDIT_FIELD
         )

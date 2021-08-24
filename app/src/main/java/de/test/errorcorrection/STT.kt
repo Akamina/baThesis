@@ -18,7 +18,7 @@ class STT {
             RecognizerIntent.EXTRA_LANGUAGE_MODEL,
             RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
         )
-        sttIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
+        sttIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US.toString())
         sttIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now!")
         sttIntent.putExtra("REQUEST_CODE", requestCode)
 

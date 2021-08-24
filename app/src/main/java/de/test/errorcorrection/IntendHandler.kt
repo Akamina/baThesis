@@ -9,17 +9,17 @@ class IntendHandler {
      */
     private fun getCommand(text: String): String {
         //TODO: add lists of words and synonyms to compare here
-        if (text.contains("erstell")) {
+        if (text.contains("erstell") || text.contains("create")) {
             //erinnere mich soll auch diesen Fall auslösen
             return "create"
         }
-        if (text.contains("lösche")) {
+        if (text.contains("lösche") || text.contains("delete")) {
             return "delete"
         }
-        if (text.contains("bearbeite")) {
+        if (text.contains("bearbeite") || text.contains("edit")) {
             return "edit"
         }
-        if (text.contains("lies")) {
+        if (text.contains("lies") || text.contains("read")) {
             return "read"
         }
         return "error"
@@ -33,13 +33,13 @@ class IntendHandler {
      */
     //TODO: compare index of reminder and appointment so create an appointment with the name reminder is still an appointment and not a reminder
     private fun getTarget(text: String): String {
-        if (text.contains("Liste")) {
+        if (text.contains("Liste") || text.contains("list") || text.contains("List")) {
             return "list"
         }
-        if (text.contains("Erinnerung")) {
+        if (text.contains("Erinnerung") || text.contains("reminder") || text.contains("Reminder")) {
             return "reminder"
         }
-        if (text.contains("Termin") || text.contains("termin")) {
+        if (text.contains("Termin") || text.contains("termin") || text.contains("appointment") || text.contains("Appointment")) {
             return "appointment"
         }
         return "error"
@@ -54,7 +54,8 @@ class IntendHandler {
     internal fun handleInput(text: String, mainActivity: MainActivity) {
         val command = getCommand(text)
         val target = getTarget(text)
-        val tmp = Appointment()
+        //val askUsr = "Das habe ich leider nicht verstanden"
+        val askUsr = "Unfortunately I didn't understand that"
 
         when (command) {
             "create" -> when (target) {
@@ -62,16 +63,18 @@ class IntendHandler {
                 "appointment" -> mainActivity.appntmnt.askName(mainActivity)//println("$command $target")
                 //"reminder" -> println("$command $target")
                 "reminder" -> mainActivity.askUser(
-                    "Wie lautet der Name der Erinnerung?",
+                    //"Wie lautet der Name der Erinnerung?",
+                    "What is the name of the reminder?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_NAME
                 )//println("$command $target")
                 //"list" -> println("$command $target")
-                "list" -> mainActivity.askUser("Wie lautet der Name der Liste?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_NAME)//println("$command $target")
+                //"list" -> mainActivity.askUser("Wie lautet der Name der Liste?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_NAME)//println("$command $target")
+                "list" -> mainActivity.askUser("What's the name of the list?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_NAME)//println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
                     mainActivity.askUser(
-                        "Das habe ich leider nicht verstanden",
+                        askUsr,
                         mainActivity,
                         MainActivity.REQUEST_CODE_STT_NOTIFY
                     )
@@ -81,13 +84,15 @@ class IntendHandler {
                 //"appointment" -> println("$command $target")
                 "appointment" -> mainActivity.appntmnt.askAppointmentEdit(mainActivity)//println("$command $target")
                 //"reminder" -> println("$command $target")
-                "reminder" -> mainActivity.askUser("Wie heißt die Erinnerung die du bearbeiten möchtest?", mainActivity, MainActivity.REQUEST_CODE_STT_REMINDER_EDIT)//println("$command $target")
+                //"reminder" -> mainActivity.askUser("Wie heißt die Erinnerung die du bearbeiten möchtest?", mainActivity, MainActivity.REQUEST_CODE_STT_REMINDER_EDIT)//println("$command $target")
+                "reminder" -> mainActivity.askUser("What is the name of the reminder you want to edit?", mainActivity, MainActivity.REQUEST_CODE_STT_REMINDER_EDIT)//println("$command $target")
                 //"list" -> println("$command $target")
-                "list" -> mainActivity.askUser("Welche Liste möchtest du bearbeiten?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_EDIT)//println("$command $target")
+                //"list" -> mainActivity.askUser("Welche Liste möchtest du bearbeiten?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_EDIT)//println("$command $target")
+                "list" -> mainActivity.askUser("Which list do you want to edit?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_EDIT)//println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
                     mainActivity.askUser(
-                        "Das habe ich leider nicht verstanden",
+                        askUsr,
                         mainActivity,
                         MainActivity.REQUEST_CODE_STT_NOTIFY
                     )
@@ -98,16 +103,18 @@ class IntendHandler {
                 "appointment" -> mainActivity.appntmnt.askAppointmentDelete(mainActivity)//println("$command $target")
                 //"reminder" -> println("$command $target")
                 "reminder" -> mainActivity.askUser(
-                    "Welche Erinnerung soll gelöscht werden?",
+                    //"Welche Erinnerung soll gelöscht werden?",
+                    "Which reminder should be deleted?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_DELETE
                 )//println("$command $target")
                 //"list" -> println("$command $target")
-                "list" -> mainActivity.askUser("Welche Liste möchtest du löschen?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_DELETE)//println("$command $target")
+                //"list" -> mainActivity.askUser("Welche Liste möchtest du löschen?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_DELETE)//println("$command $target")
+                "list" -> mainActivity.askUser("Which list do you want to delete?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_DELETE)//println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
                     mainActivity.askUser(
-                        "Das habe ich leider nicht verstanden",
+                        askUsr,
                         mainActivity,
                         MainActivity.REQUEST_CODE_STT_NOTIFY
                     )
@@ -117,23 +124,26 @@ class IntendHandler {
                 //"appointment" -> println("$command $target")
                 //"appointment" -> mainActivity.appntmnt.readAppointment(mainActivity)//println("$command $target")
                 "appointment" -> mainActivity.askUser(
-                    "Wie lautet der Name des Termins den ich vorlesen soll?",
+                    //"Wie lautet der Name des Termins den ich vorlesen soll?",
+                    "What is the name of the appointment I should read out?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_READ_APPOINTMENT_NO_NAME
                 )
 //mainActivity.appntmnt.readAppointment(mainActivity)//println("$command $target")
                 //"reminder" -> println("$command $target")
                 "reminder" -> mainActivity.askUser(
-                    "Wie lautet der Name der Erinnerung die ich vorlesen soll?",
+                    //"Wie lautet der Name der Erinnerung die ich vorlesen soll?",
+                    "What is the name of the reminder that I should read?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_READ
                 )//println("$command $target")
                 //"list" -> println("$command $target")
-                "list" -> mainActivity.askUser("Welche Liste soll ich vorlesen?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_READ)//println("$command $target")
+                //"list" -> mainActivity.askUser("Welche Liste soll ich vorlesen?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_READ)//println("$command $target")
+                "list" -> mainActivity.askUser("Which list should I read out?", mainActivity, MainActivity.REQUEST_CODE_STT_LIST_READ)//println("$command $target")
                 else -> {
                     println("Ziel nicht verstanden")
                     mainActivity.askUser(
-                        "Das habe ich leider nicht verstanden",
+                        askUsr,
                         mainActivity,
                         MainActivity.REQUEST_CODE_STT_NOTIFY
                     )
@@ -142,7 +152,7 @@ class IntendHandler {
             else -> {
                 println("Kommando nicht verstanden")
                 mainActivity.askUser(
-                    "Das habe ich leider nicht verstanden",
+                    askUsr,
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_NOTIFY
                 )
@@ -165,16 +175,16 @@ class IntendHandler {
         //Check location
         if (isLocation(text)) return "location"
         //Check for read out
-        if (text.contains("lies")) return "read"
+        if (text.contains("lies") || text.contains("read") || text.contains("Read")) return "read"
 
         return "error"
     }
 
     internal fun getListIntend(text: String): String {
-        if (text.contains("lies")) return "read"
-        if (text.contains("hinzufügen") || text.contains("füge")) return "add"
-        if (text.contains("änder") || text.contains("ersetz")) return "replace"
-        if (text.contains("entfern") || text.contains("lösch")) return "delete"
+        if (text.contains("lies") || text.contains("read") || text.contains("Read")) return "read"
+        if (text.contains("hinzufügen") || text.contains("füge") || text.contains("add") || text.contains("Add") || text.contains("insert") || text.contains("Insert")) return "add"
+        if (text.contains("änder") || text.contains("ersetz") || text.contains("replace") || text.contains("Replace")) return "replace"
+        if (text.contains("entfern") || text.contains("lösch") || text.contains("delete") || text.contains("Delete")) return "delete"
         if (text.contains("name") || text.contains("Name")) return "name"
         return "error"
     }
@@ -185,7 +195,7 @@ class IntendHandler {
      * @return
      */
     private fun isLocation(text: String): Boolean {
-        if (text.contains("Ort") || text.contains("ort") || text.contains("location") || text.contains(
+        if (text.contains("Ort") || text.contains("ort") || text.contains("location") || text.contains("Location") || text.contains(
                 "örtlichkeit"
             ) || text.contains("Örtlichkeit")
         ) return true
@@ -201,7 +211,7 @@ class IntendHandler {
     private fun isTime(text: String): Boolean {
         if (text.contains("zeit") || text.contains("Zeit") || text.contains("Uhrzeit") || text.contains(
                 "uhrzeit"
-            )
+            ) || text.contains("time") || text.contains("Time")
         ) return true
 
         return false
@@ -213,7 +223,7 @@ class IntendHandler {
      * @return
      */
     private fun isDate(text: String): Boolean {
-        if (text.contains("Datum") || text.contains("datum")) return true
+        if (text.contains("Date") || text.contains("date")) return true
 
         return false
     }
@@ -224,8 +234,8 @@ class IntendHandler {
      * @return
      */
     private fun isName(text: String): Boolean {
-        if (text.contains("Name") || text.contains("name") || text.contains("Titel") || text.contains(
-                "titel"
+        if (text.contains("Name") || text.contains("name") || text.contains("Title") || text.contains(
+                "title"
             ) || text.contains("Bezeichnung") || text.contains("bezeichnung")
         ) return true
 

@@ -21,8 +21,6 @@ class Logger {
      * @param sender sender of text parameter (User: 1, System: 0)
      */
     internal fun writeLog(text: String, sender: Int, mainActivity: MainActivity) {
-        //TODO replace deprecated function
-        //val sd_main = File(Environment.getExternalStorageDirectory(), "test")
         val sd_main = File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DCIM), "test")
         var success = true
         if (!sd_main.exists())
@@ -39,21 +37,19 @@ class Logger {
             try {
                 dest.appendText("$currentTimeAndDate-$sndr:$text\n")
             } catch (e: Exception) {
-                //TODO handle exception
+                e.printStackTrace()
             }
         } else {
             //directory creation is not successful
-            Log.e("DEBUG", "Erstellen vom Odner fehlgeschlagen")
+            Log.e("DEBUG", "Erstellen vom Ordner fehlgeschlagen")
         }
-        readLog(mainActivity)
+        //readLog(mainActivity)
     }
 
     /**
      * This function reads the log file and prints it on the console for debugging
      */
     internal fun readLog(mainActivity: MainActivity) {
-        //TODO change to internal storage
-        //val sd_main = File(Environment.getExternalStorageDirectory(), "test")
         val sd_main = File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DCIM), "test")
         var success = true
         if (!sd_main.exists())
