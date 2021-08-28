@@ -122,11 +122,20 @@ class STT {
                 MainActivity.REQUEST_CODE_STT_LIST_EDIT_ITEM_REMOVE -> {
                     mainActivity.listEditItemRemove.launch(sttIntent)
                 }
-                MainActivity.REQUEST_CODE_STT_LIST_EDIT_ITEM_READ -> {
-
-                }
                 MainActivity.REQUEST_CODE_STT_LIST_EDIT_NAME -> {
                     mainActivity.listEditName.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION -> {
+                    mainActivity.appointmentEditCreation.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_CREATION -> {
+                    mainActivity.reminderEditCreation.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION_END -> {
+                    mainActivity.appointmentEditCreationSecond.launch(sttIntent)
+                }
+                MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_CREATION_END -> {
+                    mainActivity.reminderEditCreationSecond.launch(sttIntent)
                 }
             }
         } catch (e: ActivityNotFoundException) {

@@ -1,7 +1,6 @@
 package de.test.errorcorrection
 
 import android.content.Intent
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.speech.RecognizerIntent
@@ -14,8 +13,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import com.jakewharton.threetenabp.AndroidThreeTen
 import kotlinx.coroutines.*
-import java.lang.Exception
 import java.util.*
+import kotlin.Exception
 
 
 open class MainActivity : AppCompatActivity() {
@@ -55,6 +54,10 @@ open class MainActivity : AppCompatActivity() {
         internal const val REQUEST_CODE_STT_LIST_EDIT_ITEM_REMOVE = 33
         internal const val REQUEST_CODE_STT_LIST_EDIT_ITEM_READ = 34
         internal const val REQUEST_CODE_STT_LIST_EDIT_NAME = 35
+        internal const val REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION = 36
+        internal const val REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION_END = 37
+        internal const val REQUEST_CODE_STT_REMINDER_EDIT_CREATION = 38
+        internal const val REQUEST_CODE_STT_REMINDER_EDIT_CREATION_END = 39
     }
 
     //Initialize TTS-Engine
@@ -68,13 +71,13 @@ open class MainActivity : AppCompatActivity() {
         }
     }
 
-    internal lateinit var logger: Logger
-    internal lateinit var permissions: Permissions
+    private lateinit var logger: Logger
+    private lateinit var permissions: Permissions
     internal lateinit var handler: IntendHandler
-    internal lateinit var stt: STT
+    private lateinit var stt: STT
     internal lateinit var appntmnt: Appointment
-    internal lateinit var rmdr: Reminder
-    internal lateinit var lst: List
+    private lateinit var rmdr: Reminder
+    private lateinit var lst: List
 
     internal var currentList = -1
 
@@ -111,6 +114,10 @@ open class MainActivity : AppCompatActivity() {
     internal lateinit var listEditItemReplaceNext: ActivityResultLauncher<Intent>
     internal lateinit var listEditField: ActivityResultLauncher<Intent>
     internal lateinit var listEditName: ActivityResultLauncher<Intent>
+    internal lateinit var appointmentEditCreation: ActivityResultLauncher<Intent>
+    internal lateinit var appointmentEditCreationSecond: ActivityResultLauncher<Intent>
+    internal lateinit var reminderEditCreation: ActivityResultLauncher<Intent>
+    internal lateinit var reminderEditCreationSecond: ActivityResultLauncher<Intent>
 
     private var countTime: Int = 0
     private var countDate: Int = 0
@@ -138,10 +145,8 @@ open class MainActivity : AppCompatActivity() {
 
         // Checking permissions
         permissions.checkPermissions(this)
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main)
 
-        //get reference for tts button
-        //val btn_tts = findViewById<Button>(R.id.playButton)
         val textbox = findViewById<EditText>(R.id.et_text_input)
 
 
@@ -150,20 +155,6 @@ open class MainActivity : AppCompatActivity() {
             lst = loadedLst
         }
 
-        /*
-        btn_tts.setOnClickListener {
-            val text = textbox.text.toString().trim()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts1")
-                logger.writeLog(text, 0, this)
-            } else {
-                textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
-                logger.writeLog(text, 0, this)
-
-            }
-        }
-
-         */
         //Init ActivityResultLauncher
         //Initial dialogue
         dialogueStart =
@@ -214,12 +205,27 @@ open class MainActivity : AppCompatActivity() {
                     textbox.setText(recognizedText)
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
+
+                    //TESTING
+                    var editField = handler.editCheck(recognizedText, this)
+                    if (editField != "continue") {
+                        handleEditAppointment(
+                            editField,
+                            "I did not really get that. What date is the appointment?",
+                            this,
+                            REQUEST_CODE_STT_DATE,
+                            REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION
+                        )
+                        return@registerForActivityResult
+                    }
+
                     try {
                         appntmnt.parseLocalDate(recognizedText)
                         appntmnt.setDate(recognizedText)
                         countDate = 0
                         //askUser("Um welche Uhrzeit ist der Termin?",
-                        askUser("What time is the appointment?",
+                        askUser(
+                            "What time is the appointment?",
                             this,
                             REQUEST_CODE_STT_TIME
                         )
@@ -250,6 +256,19 @@ open class MainActivity : AppCompatActivity() {
                     textbox.setText(recognizedText)
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
+
+                    var editField = handler.editCheck(recognizedText, this)
+                    if (editField != "continue") {
+                        handleEditAppointment(
+                            editField,
+                            "I did not understand. What time is the appointment?",
+                            this,
+                            REQUEST_CODE_STT_TIME,
+                            REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION
+                        )
+                        return@registerForActivityResult
+                    }
+
                     try {
                         appntmnt.parseLocalTime(recognizedText)
                         appntmnt.setTime(recognizedText)
@@ -284,8 +303,62 @@ open class MainActivity : AppCompatActivity() {
                     textbox.setText(recognizedText)
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
+
+                    var editField = handler.editCheck(recognizedText, this)
+                    if (editField != "continue") {
+                        handleEditAppointment(
+                            editField,
+                            "I did not understand. Where does the appointment take place?",
+                            this,
+                            REQUEST_CODE_STT_LOCATION,
+                            REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION
+                        )
+                        return@registerForActivityResult
+                    }
+
                     appntmnt.setLocation(recognizedText)
-                    appntmnt.createAppointment(this)
+                    appntmnt.addError()
+                    appntmnt.readData(this)
+                    //appntmnt.createAppointment(this)
+                }
+            }
+        appointmentEditCreationSecond =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+                //Sanity check
+                if (checkIntentData(result)) {
+                    return@registerForActivityResult
+                }
+                val rslt = result.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                rslt?.let {
+                    val recognizedText = it[0]
+                    textbox.setText(recognizedText)
+                    logger.writeLog(recognizedText, 1, this)
+                    println(recognizedText) //debug
+
+                    if (recognizedText.contains("read") || recognizedText.contains("Read")) {
+                        appntmnt.readData(this)
+                        return@registerForActivityResult
+                    }
+                    var editField = handler.editCheck(recognizedText, this)
+                    if (editField != "continue") {
+                        handleEditAppointment(
+                            editField,
+                            "I did not understand that. What field do you want to edit?",
+                            this,
+                            REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION_END,
+                            REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION
+                        )
+                        return@registerForActivityResult
+                    }
+                    if (stopDialogue(recognizedText)) {
+                        appntmnt.createAppointment(this)
+                    } else {
+                        askUser(
+                            "I did not understand that. What do you want to do?",
+                            this,
+                            REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION_END
+                        )
+                    }
                 }
             }
         //Delete appointment dialogue, calls delete function
@@ -354,10 +427,10 @@ open class MainActivity : AppCompatActivity() {
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     try {
-                        if (appntmnt.field == "date") {
+                        if (appntmnt.getField() == "date") {
                             appntmnt.parseLocalDate(recognizedText)
                         }
-                        if (appntmnt.field == "time") {
+                        if (appntmnt.getField() == "time") {
                             appntmnt.parseLocalTime(recognizedText)
                         }
                         countEdit = 0
@@ -466,6 +539,19 @@ open class MainActivity : AppCompatActivity() {
                     textbox.setText(recognizedText)
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
+
+                    var editField = handler.editCheck(recognizedText, this)
+                    if (editField != "continue") {
+                        handleEditReminder(
+                            editField,
+                            "I didn't understand that correctly. What date should I remind you?",
+                            this,
+                            REQUEST_CODE_STT_REMINDER_DATE,
+                            REQUEST_CODE_STT_REMINDER_EDIT_CREATION
+                        )
+                        return@registerForActivityResult
+                    }
+
                     try {
                         appntmnt.parseLocalDate(recognizedText)
                         countDate = 0
@@ -491,7 +577,7 @@ open class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-        //Get reimders time during cration
+        //Get reminders time during creation
         reminderTime =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 //Sanity check
@@ -504,11 +590,25 @@ open class MainActivity : AppCompatActivity() {
                     textbox.setText(recognizedText)
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
+
+                    var editField = handler.editCheck(recognizedText, this)
+                    if (editField != "continue") {
+                        handleEditReminder(
+                            editField,
+                            "I didn't understand that correctly. What time should I remind you?",
+                            this,
+                            REQUEST_CODE_STT_REMINDER_TIME,
+                            REQUEST_CODE_STT_REMINDER_EDIT_CREATION
+                        )
+                        return@registerForActivityResult
+                    }
+
                     try {
                         appntmnt.parseLocalTime(recognizedText)
                         countTime = 0
                         rmdr.setTime(recognizedText)
-                        rmdr.createReminder(this)
+                        rmdr.addError()
+                        rmdr.readData(this)
 
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -521,6 +621,46 @@ open class MainActivity : AppCompatActivity() {
                                 REQUEST_CODE_STT_REMINDER_TIME
                             )
                         }
+                    }
+                }
+            }
+        //Edit reminder before creating is finished
+        reminderEditCreationSecond =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+                //Sanity check
+                if (checkIntentData(result)) {
+                    return@registerForActivityResult
+                }
+                val rslt = result.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                rslt?.let {
+                    val recognizedText = it[0]
+                    textbox.setText(recognizedText)
+                    logger.writeLog(recognizedText, 1, this)
+                    println(recognizedText) //debug
+
+                    if (recognizedText.contains("read") || recognizedText.contains("Read")) {
+                        rmdr.readData(this)
+                        return@registerForActivityResult
+                    }
+                    var editField = handler.editCheck(recognizedText, this)
+                    if (editField != "continue") {
+                        handleEditReminder(
+                            editField,
+                            "I did not understand that. What field do you want to edit?",
+                            this,
+                            REQUEST_CODE_STT_REMINDER_EDIT_CREATION_END,
+                            REQUEST_CODE_STT_REMINDER_EDIT_CREATION
+                        )
+                        return@registerForActivityResult
+                    }
+                    if (stopDialogue(recognizedText)) {
+                        rmdr.createReminder(this)
+                    } else {
+                        askUser(
+                            "I did not understand that. What do you want to do?",
+                            this,
+                            REQUEST_CODE_STT_REMINDER_EDIT_CREATION_END
+                        )
                     }
                 }
             }
@@ -620,10 +760,10 @@ open class MainActivity : AppCompatActivity() {
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
                     try {
-                        if (rmdr.field == "date") {
+                        if (rmdr.getField() == "date") {
                             appntmnt.parseLocalDate(recognizedText)
                         }
-                        if (rmdr.field == "time") {
+                        if (rmdr.getField() == "time") {
                             appntmnt.parseLocalTime(recognizedText)
                         }
                         countEdit = 0
@@ -918,10 +1058,11 @@ open class MainActivity : AppCompatActivity() {
                     textbox.setText(recognizedText)
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
-                    lst.lists[currentList].set(lst.replaceableIndex, recognizedText)
+                    lst.lists[currentList][lst.replaceableIndex] = recognizedText
                     askUser(
                         //"Ich habe ${lst.replaceable} durch $recognizedText ersetzt. Möchtest du noch etwas bearbeiten?",
-                        "I replaced ${lst.replaceable} with $recognizedText. Would you like to edit something else?",                        this,
+                        "I replaced ${lst.replaceable} with $recognizedText. Would you like to edit something else?",
+                        this,
                         REQUEST_CODE_STT_LIST_EDIT_FIELD
                     )
                     lst.replaceable = ""
@@ -942,7 +1083,7 @@ open class MainActivity : AppCompatActivity() {
                     textbox.setText(recognizedText)
                     logger.writeLog(recognizedText, 1, this)
                     println(recognizedText) //debug
-                    lst.lists[currentList].set(0, recognizedText)
+                    lst.lists[currentList][0] = recognizedText
                     askUser(
                         //"Ich habe den Namen der Liste auf $recognizedText geändert. Was möchtest du noch bearbeiten?",
                         "I changed the name of the list to $recognizedText. What else do you want to edit?",
@@ -951,25 +1092,92 @@ open class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+        //Appointment edit during creation
+        appointmentEditCreation =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+                //Sanity check
+                if (checkIntentData(result)) {
+                    return@registerForActivityResult
+                }
+                val rslt = result.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                rslt?.let {
+                    val recognizedText = it[0]
+                    textbox.setText(recognizedText)
+                    logger.writeLog(recognizedText, 1, this)
+                    println(recognizedText) //debug
+                    try {
+                        appntmnt.checkDateAndTimeValidity(recognizedText)
+                        appntmnt.updateParameter(this, recognizedText)
+                        countEdit = 0
+                    } catch (e: java.lang.Exception) {
+                        e.printStackTrace()
+                        countEdit++
+                        askUser(
+                            "Unfortunately I did not understand that. What is the update?",
+                            this,
+                            REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION
+                        )
+                    }
+                }
+            }
+        //Reminder edit during creation
+        reminderEditCreation =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+                //Sanity check
+                if (checkIntentData(result)) {
+                    return@registerForActivityResult
+                }
+                val rslt = result.data!!.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                rslt?.let {
+                    val recognizedText = it[0]
+                    textbox.setText(recognizedText)
+                    logger.writeLog(recognizedText, 1, this)
+                    println(recognizedText) //debug
+                    try {
+                        appntmnt.checkDateAndTimeValidity(recognizedText)
+                        rmdr.updateParameter(this, recognizedText)
+                        countEdit = 0
+                    } catch (e: java.lang.Exception) {
+                        e.printStackTrace()
+                        countEdit++
+                        askUser(
+                            "Unfortunately I did not understand that. What is the update?",
+                            this,
+                            REQUEST_CODE_STT_REMINDER_EDIT_CREATION
+                        )
+                    }
+                }
+            }
 
-        val btn_stt = findViewById<Button>(R.id.recordButton)
+        val btnSTT = findViewById<Button>(R.id.recordButton)
 
         /**
          * Getting user input and starting decision finding process
          * */
 
-        btn_stt.setOnClickListener {
+        btnSTT.setOnClickListener {
             stt.getUserInput(this, REQUEST_CODE_STT)
+            countName = 0
+            countDate = 0
+            countTime = 0
+            countEdit = 0
         }
 
     }
 
+    /**
+     * This function checks if the user wants to stop the dialogue
+     * @param recognizedText User input
+     * @return
+     */
     private fun stopDialogue(recognizedText: String): Boolean {
         return (recognizedText.contains("nein") || recognizedText.contains("Nein") || recognizedText.contains(
             "Stop"
         ) || recognizedText.contains("stop") || recognizedText.contains("nichts") || recognizedText.contains(
             "Nichts"
-        ) || recognizedText.contains("no") || recognizedText.contains("No") || recognizedText.contains("nothing")  || recognizedText.contains("Nothing"))
+        ) || recognizedText.contains("no") || recognizedText.contains("No") || recognizedText.contains(
+            "nothing"
+        ) || recognizedText.contains("Nothing"))
     }
 
     /**
@@ -999,7 +1207,7 @@ open class MainActivity : AppCompatActivity() {
     internal fun askUser(text: String, mainActivity: MainActivity, requestCode: Int) {
         val job = GlobalScope.launch {
             println("waiting in thread: ${Thread.currentThread().name}") //Debug
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 mainActivity.textToSpeechEngine.speak(
                     text,
                     TextToSpeech.QUEUE_FLUSH,
@@ -1007,15 +1215,16 @@ open class MainActivity : AppCompatActivity() {
                     "tts1"
                 )
                 logger.writeLog(text, 0, mainActivity)
-            } else {
+            /*} else {
                 mainActivity.textToSpeechEngine.speak(text, TextToSpeech.QUEUE_FLUSH, null)
                 logger.writeLog(text, 0, mainActivity)
             }
-            var speakingEnd: Boolean = textToSpeechEngine.isSpeaking
+            var speakingEnd: Boolean// = textToSpeechEngine.isSpeaking
             do {
                 delay(500)
                 speakingEnd = textToSpeechEngine.isSpeaking
-            } while (speakingEnd)
+            } while (speakingEnd)*/
+            waitForTTS()
         }
         //Wait until job is done, speaking in this case
         runBlocking {
@@ -1028,8 +1237,8 @@ open class MainActivity : AppCompatActivity() {
 
     }
 
-    internal fun waitForTTS(mainActivity: MainActivity) {
-        var speakingEnd: Boolean = textToSpeechEngine.isSpeaking
+    internal fun waitForTTS() {
+        var speakingEnd: Boolean// = textToSpeechEngine.isSpeaking
         do {
             Thread.sleep(500)
             speakingEnd = textToSpeechEngine.isSpeaking
@@ -1046,6 +1255,68 @@ open class MainActivity : AppCompatActivity() {
             Log.i("FileResultLauncher", "No Uri returned or result wasn't OK.")
             true
         } else false
+    }
+
+    /**
+     * This function handles edit intend during appointment creation
+     * @param field Field that will be edited
+     * @param msg Message that will be asked
+     * @param mainActivity Context
+     * @param requestCode Context to know what to do next
+     */
+    private fun handleEditAppointment(
+        field: String,
+        msg: String,
+        mainActivity: MainActivity,
+        errorRequestCode: Int,
+        requestCode: Int
+    ) {
+        if (field == "error") {
+            askUser(
+                msg,
+                this,
+                errorRequestCode
+            )
+        } else {
+            //TODO handle "read" case
+            appntmnt.setField(field)
+            askUser(
+                "What is the new $field?",
+                mainActivity,
+                requestCode
+            )
+        }
+    }
+
+    /**
+     * This function handles edit intend during reminder creation
+     * @param field Field that will be edited
+     * @param msg Message that will be asked
+     * @param mainActivity Context
+     * @param requestCode Context to know what to do next
+     */
+    private fun handleEditReminder(
+        field: String,
+        msg: String,
+        mainActivity: MainActivity,
+        errorRequestCode: Int,
+        requestCode: Int
+    ) {
+        if (field == "error") {
+            askUser(
+                msg,
+                this,
+                errorRequestCode
+            )
+        } else {
+            //TODO handle "read" case
+            rmdr.setField(field)
+            askUser(
+                "What is the new $field?",
+                mainActivity,
+                requestCode
+            )
+        }
     }
 
 }

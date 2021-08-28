@@ -13,14 +13,16 @@ import kotlin.random.Random
 
 
 class Reminder {
-    private lateinit var reminderName: String
-    private lateinit var reminderDate: String
-    private lateinit var reminderTime: String
-    internal lateinit var field: String
+    private var reminderName: String = ""
+    private var reminderDate: String = ""
+    private var reminderTime: String = ""
+    private var field: String = ""
     private var reminderID: Long = 0
-    private val errorName = mutableListOf<String>("lunch", "dinner", "dentist", "doctor")
-    private val errorDate = mutableListOf<LocalDate>(LocalDate.of(2020, 10, 20), LocalDate.of(2021, 10, 2))
-    private val errorTime = mutableListOf<LocalTime>(LocalTime.of(12, 45), LocalTime.of(11, 33), LocalTime.of(15, 5), LocalTime.of(22, 45))
+    private val errorName = mutableListOf("lunch", "dinner", "dentist", "doctor")
+    private val errorDate =
+        mutableListOf("20th of October 2021")//LocalDate.of(2020, 10, 20), LocalDate.of(2021, 10, 2))
+    private val errorTime =
+        mutableListOf("5 a.m.")//LocalTime.of(12, 45), LocalTime.of(11, 33), LocalTime.of(15, 5), LocalTime.of(22, 45))
 
 
     /**
@@ -35,27 +37,8 @@ class Reminder {
         //Select default calendar
         event.put(CalendarContract.Events.CALENDAR_ID, 1)
 
-        var dateTime = mainActivity.appntmnt.getDateTimeFromString(reminderDate, reminderTime)
-
-        var rng = Random
-        println(rng.nextInt(1))
-        var index = rng.nextInt(4)
-        when (index) {
-            0 -> {
-                reminderName = errorName[rng.nextInt(errorName.size)]
-            }
-            1 -> {
-                var dte = errorDate[rng.nextInt(errorDate.size)]
-                dateTime = dateTime.withYear(dte.year)
-                dateTime = dateTime.withMonth(dte.monthValue)
-                dateTime = dateTime.withDayOfMonth(dte.dayOfMonth)
-            }
-            2 -> {
-                var tme = errorTime[rng.nextInt(errorTime.size)]
-                dateTime = dateTime.withHour(tme.hour)
-                dateTime = dateTime.withMinute(tme.minute)
-            }
-        }
+        //var dateTime = mainActivity.appntmnt.getDateTimeFromString(reminderDate, reminderTime)
+        var dateTime: LocalDateTime
 
         val tm =
             mainActivity.appntmnt.getDateTimeFromString(reminderDate, reminderTime)
@@ -73,7 +56,7 @@ class Reminder {
         val baseUri = mainActivity.appntmnt.getCalendarUriBase()
 
         //Insert event into calendar
-        var evnt = mainActivity.contentResolver.insert(baseUri, event)
+        mainActivity.contentResolver.insert(baseUri, event)
 
         reminderID = mainActivity.appntmnt.listSelectedCalendars(reminderName, mainActivity)
 
@@ -105,6 +88,7 @@ class Reminder {
             mainActivity,
             MainActivity.REQUEST_CODE_STT_NOTIFY
         )
+        resetParameters()
     }
 
     /**
@@ -127,7 +111,7 @@ class Reminder {
             return
         }
 
-        var iNumRowsDeleted = 0
+        var iNumRowsDeleted: Int
 
         val eventUri = ContentUris
             .withAppendedId(mainActivity.appntmnt.getCalendarUriBase(), eventID)
@@ -173,6 +157,8 @@ class Reminder {
 
                 //Get all events with matching name
                 do {
+                    //TODO write this into global variables so it can be moved into a seperate function
+
                     calName = cursor.getString(nameCol)
                     calID = cursor.getString(idCol)
                     calDate = cursor.getString(dateCol)
@@ -234,22 +220,26 @@ class Reminder {
      */
     fun continueEdit(recognizedText: String, mainActivity: MainActivity) {
         field = mainActivity.handler.getField(recognizedText, mainActivity)
-        if (field == "error") {
-            mainActivity.askUser(
-                //"Was soll geändert werden?",
-                "What should be changed?",
-                mainActivity,
-                MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_FIELD
-            )
-        } else if (field == "read") {
-            readReminderEdit(mainActivity)
-        } else {
-            mainActivity.askUser(
-                //"Wie lautet die Änderung?",
-                "What's the change?",
-                mainActivity,
-                MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_NEW
-            )
+        when (field) {
+            "error" -> {
+                mainActivity.askUser(
+                    //"Was soll geändert werden?",
+                    "What should be changed?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_FIELD
+                )
+            }
+            "read" -> {
+                readReminderEdit(mainActivity)
+            }
+            else -> {
+                mainActivity.askUser(
+                    //"Wie lautet die Änderung?",
+                    "What's the change?",
+                    mainActivity,
+                    MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_NEW
+                )
+            }
         }
     }
 
@@ -264,13 +254,11 @@ class Reminder {
         var newEvent = ContentValues()
         var updateUri = ContentUris.withAppendedId(event, reminderID)
         var date: Long
-        var iNumRowsUpdated = 0
         var localDateTime: LocalDateTime
         when (field) {
             "name" -> {
                 newEvent.put(CalendarContract.Events.TITLE, text)
-                iNumRowsUpdated =
-                    mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
                     //"Ich habe den Namen auf $text geändert. Möchtest du noch etwas ändern?",
                     "I changed the name to $text. Would you like to change anything else?",
@@ -295,8 +283,7 @@ class Reminder {
                     CalendarContract.Events.DTSTART,
                     localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli()
                 )
-                iNumRowsUpdated =
-                    mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
                     //"Ich habe das Datum auf $localDate geändert. Möchtest du noch etwas ändern?",
                     "I changed the date to $localDate. Would you like to change anything else?",
@@ -322,8 +309,7 @@ class Reminder {
                     CalendarContract.Events.DTSTART,
                     localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli()
                 )
-                iNumRowsUpdated =
-                    mainActivity.contentResolver.update(updateUri, newEvent, null, null)
+                mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
                     //"Ich habe die Zeit auf $localTime geändert. Möchtest du noch etwas ändern?",
                     "I changed the time to $localTime. Would you like to change anything?",
@@ -370,6 +356,8 @@ class Reminder {
 
                 //Get all events with matching name
                 do {
+                    //TODO write this into global variables so it can be moved into a seperate function
+
                     calName = cursor.getString(nameCol)
                     calID = cursor.getString(idCol)
                     calDate = cursor.getString(dateCol)
@@ -395,6 +383,45 @@ class Reminder {
         }
     }
 
+    internal fun updateParameter(mainActivity: MainActivity, text: String) {
+        when (field) {
+            "name" -> {
+                this.reminderName = text
+            }
+            "date" -> {
+                this.reminderDate = text
+            }
+            "time" -> {
+                this.reminderTime = text
+            }
+            "location" -> {
+                //TODO fill me
+            }
+            "read" -> {
+                //TODO fill me
+                readData(mainActivity)
+            }
+        }
+        if (this.reminderDate == "") {
+            mainActivity.askUser(
+                "What date is the appointment?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_REMINDER_DATE
+            )
+            return
+        }
+        if (this.reminderTime == "") {
+            mainActivity.askUser(
+                "What time is the appointment?",
+                mainActivity,
+                MainActivity.REQUEST_CODE_STT_REMINDER_TIME
+            )
+            return
+        }
+        //TODO add all fields set -> get to creation again
+        readData(mainActivity)
+    }
+
 
     fun setName(recognizedText: String) {
         this.reminderName = recognizedText
@@ -410,6 +437,56 @@ class Reminder {
 
     fun setEvent(listSelectedCalendars: Long) {
         this.reminderID = listSelectedCalendars
+    }
+
+    fun getField(): String {
+        return this.field
+    }
+
+    fun setField(text: String) {
+        this.field = text
+    }
+
+    /**
+     * TODO
+     *
+     * @param mainActivity
+     */
+    fun readData(mainActivity: MainActivity) {
+        mainActivity.askUser(
+            "The name is $reminderName, the date is $reminderDate and the time is $reminderTime. Do you wish to edit something?",
+            mainActivity,
+            MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_CREATION_END
+        )
+
+    }
+
+    /**
+     * TODO
+     *
+     */
+    private fun resetParameters() {
+        this.reminderName = ""
+        this.reminderDate = ""
+        this.reminderTime = ""
+    }
+
+    internal fun addError() {
+        var rng = Random
+        println(rng.nextInt(1))
+        var index = rng.nextInt(4)
+        when (index) {
+            0 -> {
+                reminderName = errorName[rng.nextInt(errorName.size)]
+            }
+            1 -> {
+                reminderDate = errorDate[rng.nextInt(errorDate.size)]
+            }
+            2 -> {
+                reminderTime = errorTime[rng.nextInt(errorTime.size)]
+
+            }
+        }
     }
 
 

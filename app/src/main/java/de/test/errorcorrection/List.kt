@@ -9,10 +9,10 @@ import kotlin.random.Random
 
 class List : Serializable {
     internal var lists: MutableList<MutableList<String>> =
-        mutableListOf<MutableList<String>>()
+        mutableListOf()
     internal var replaceable: String = ""
     internal var replaceableIndex: Int = -1
-    private var errorItems = mutableListOf<String>("Video game", "TV Magazine", "Apples", "Apple Pie", "Butter", "Eggs", "Cheese", "Milk")
+    private var errorItems = mutableListOf("Video game", "TV Magazine", "Apples", "Apple Pie", "Butter", "Eggs", "Cheese", "Milk")
     private var rng = Random
 
     /**
@@ -128,7 +128,7 @@ class List : Serializable {
         )
         i++
         while (i < lst.size) {
-            mainActivity.waitForTTS(mainActivity)
+            mainActivity.waitForTTS()
             mainActivity.askUser(
                 "$i. ${lst[i]}",
                 mainActivity,
@@ -227,7 +227,7 @@ class List : Serializable {
      * @param T Type
      * @param mainActivity Context
      */
-    internal fun <T : Serializable?> saveLists(mainActivity: MainActivity) {
+    private fun <T : Serializable?> saveLists(mainActivity: MainActivity) {
         try {
             val fos = mainActivity.openFileOutput("lists", Context.MODE_PRIVATE)
             val os = ObjectOutputStream(fos)
