@@ -178,7 +178,7 @@ class Reminder {
                 //mainActivity.askUser("Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate().dayOfMonth}. ${localDate.toLocalDate().month} ${localDate.toLocalDate().year} um ${localDate.toLocalTime().hour}:${localDate.toLocalTime().minute} Uhr $calLocation statt", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
                 mainActivity.askUser(
                     //"Ich erinnere dich am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} an $calName.",
-                    "I remind you of ${localDate.toLocalDate()} at ${localDate.toLocalTime()} of $calName.",
+                    "I remind you of ${localDate.toLocalDate()} at ${localDate.toLocalTime().truncatedTo(ChronoUnit.MINUTES)} of $calName.",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_NOTIFY
                 )
@@ -375,7 +375,7 @@ class Reminder {
                     )
                 mainActivity.askUser(
                     //"Ich erinnere dich am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} an $calName. Möchtest du noch etwas ändern?",
-                    "I remind you of ${localDate.toLocalDate()} at ${localDate.toLocalTime()} of $calName. Would you like to change something?",
+                    "I remind you of ${localDate.toLocalDate()} at ${localDate.toLocalTime().truncatedTo(ChronoUnit.MINUTES)} of $calName. Would you like to change something?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_FIELD
                 )

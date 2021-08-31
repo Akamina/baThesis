@@ -3,6 +3,7 @@ package de.uni_hannover.errorcorrection
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.util.Log
@@ -14,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.jakewharton.threetenabp.AndroidThreeTen
 import de.uni_hannover.errorcorrection.R
 import kotlinx.coroutines.*
+import java.io.File
 import java.util.*
 import kotlin.Exception
 
@@ -125,6 +127,8 @@ open class MainActivity : AppCompatActivity() {
     private var countEdit: Int = 0
     internal var countName: Int = 0
 
+    internal lateinit var textbox :EditText // = findViewById<EditText>(R.id.et_text_input)
+
 
     /**
      * This functions initializes the application
@@ -148,7 +152,8 @@ open class MainActivity : AppCompatActivity() {
         permissions.checkPermissions(this)
         setContentView(R.layout.activity_main)
 
-        val textbox = findViewById<EditText>(R.id.et_text_input)
+        //val textbox = findViewById<EditText>(R.id.et_text_input)
+        textbox = findViewById<EditText>(R.id.et_text_input)
 
 
         var loadedLst = lst.loadLists<List>(this)
@@ -1151,6 +1156,7 @@ open class MainActivity : AppCompatActivity() {
             }
 
         val btnSTT = findViewById<Button>(R.id.recordButton)
+        val btnTST = findViewById<Button>(R.id.button)
 
         /**
          * Getting user input and starting decision finding process
@@ -1162,6 +1168,14 @@ open class MainActivity : AppCompatActivity() {
             countDate = 0
             countTime = 0
             countEdit = 0
+        }
+
+        btnTST.setOnClickListener {
+            val sdMain =
+                File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "log")
+            val dest = File(sdMain, "voice_log.txt")
+            textbox.setText(dest.absolutePath)
+            println(dest.absolutePath)
         }
 
     }

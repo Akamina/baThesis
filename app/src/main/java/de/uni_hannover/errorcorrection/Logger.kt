@@ -40,12 +40,16 @@ class Logger {
             }
             try {
                 dest.appendText("$currentTimeAndDate-$sndr:$text\n")
+                //mainActivity.textbox.setText("$currentTimeAndDate-$sndr:$text\n")
             } catch (e: Exception) {
                 e.printStackTrace()
+                dest.appendText("Error during write")
+                //mainActivity.textbox.setText("Error during write creation")
             }
         } else {
             //directory creation is not successful
             Log.e("DEBUG", "Erstellen vom Ordner fehlgeschlagen")
+            //mainActivity.textbox.setText("Error during folder creation")
         }
         //readLog(mainActivity)
     }
