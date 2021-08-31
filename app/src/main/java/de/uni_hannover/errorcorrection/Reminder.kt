@@ -1,4 +1,4 @@
-package de.test.errorcorrection
+package de.uni_hannover.errorcorrection
 
 import android.content.ContentUris
 import android.content.ContentValues
@@ -395,11 +395,12 @@ class Reminder {
                 this.reminderTime = text
             }
             "location" -> {
-                //TODO fill me
+                mainActivity.askUser("There is no field named location for a reminder. Do you want do edit something?", mainActivity, MainActivity.REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION_END)
+                return
             }
             "read" -> {
-                //TODO fill me
                 readData(mainActivity)
+                return
             }
         }
         if (this.reminderDate == "") {
@@ -418,8 +419,7 @@ class Reminder {
             )
             return
         }
-        //TODO add all fields set -> get to creation again
-        readData(mainActivity)
+        mainActivity.askUser("I have updated $field to $text. Do you wish to edit something else?", mainActivity, MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_CREATION_END)
     }
 
 
@@ -471,6 +471,10 @@ class Reminder {
         this.reminderTime = ""
     }
 
+    /**
+     * TODO
+     *
+     */
     internal fun addError() {
         var rng = Random
         println(rng.nextInt(1))

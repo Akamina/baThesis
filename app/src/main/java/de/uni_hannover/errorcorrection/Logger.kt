@@ -1,4 +1,4 @@
-package de.test.errorcorrection
+package de.uni_hannover.errorcorrection
 
 import android.os.Environment
 import android.util.Log
@@ -24,7 +24,7 @@ class Logger {
         //TODO use another path
         //val sd_main = File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "test")
         val sdMain =
-            File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "test")
+            File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "log")
         var success = true
         if (!sdMain.exists())
             success = sdMain.mkdir()
@@ -54,7 +54,7 @@ class Logger {
      * This function reads the log file and prints it on the console for debugging
      */
     internal fun readLog(mainActivity: MainActivity) {
-        val sdMain = File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DCIM), "test")
+        val sdMain = File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DCIM), "log")
         var success = true
         if (!sdMain.exists())
             success = sdMain.mkdir()

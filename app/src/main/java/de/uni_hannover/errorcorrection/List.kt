@@ -1,4 +1,4 @@
-package de.test.errorcorrection
+package de.uni_hannover.errorcorrection
 
 import android.content.Context
 import java.io.ObjectInputStream

@@ -1,4 +1,4 @@
-package de.test.errorcorrection
+package de.uni_hannover.errorcorrection
 
 import android.content.ContentValues
 import android.database.Cursor
@@ -168,7 +168,6 @@ class Appointment {
                 this.location = text
             }
             "read" -> {
-                //TODO fill me
                 readData(mainActivity)
                 return
             }
@@ -196,8 +195,8 @@ class Appointment {
             )
             return
         }
-        //TODO add all fields set -> get to creation again
-        readData(mainActivity)
+        mainActivity.askUser("I have updated $field to $text. Do you wish to edit something else?", mainActivity, MainActivity.REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION_END)
+        //readData(mainActivity)
 
     }
 

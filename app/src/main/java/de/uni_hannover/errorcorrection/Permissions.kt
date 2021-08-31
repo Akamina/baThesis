@@ -1,4 +1,4 @@
-package de.test.errorcorrection
+package de.uni_hannover.errorcorrection
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -12,7 +12,12 @@ class Permissions {
      * @param mainActivity context for permission checking
      */
     internal fun checkPermissions(mainActivity: MainActivity) {
-        //TODO change external to internal storage
+        val permissions = mutableListOf<String>(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+
+        if (!permissions.all{ActivityCompat.checkSelfPermission(mainActivity, it) == PackageManager.PERMISSION_GRANTED}) {
+            ActivityCompat.requestPermissions(mainActivity, permissions.toTypedArray(), 1)
+        }
+        /*
         if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(mainActivity,
                 arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
@@ -23,10 +28,6 @@ class Permissions {
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
         }
 
-        if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(mainActivity, arrayOf(Manifest.permission.CAMERA), 1)
-        }
-
         if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(mainActivity, arrayOf(Manifest.permission.READ_CALENDAR), 1)
         }
@@ -34,5 +35,7 @@ class Permissions {
         if (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(mainActivity, arrayOf(Manifest.permission.WRITE_CALENDAR), 1)
         }
+
+         */
     }
 }

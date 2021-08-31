@@ -1,4 +1,4 @@
-package de.test.errorcorrection
+package de.uni_hannover.errorcorrection
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -12,6 +12,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import com.jakewharton.threetenabp.AndroidThreeTen
+import de.uni_hannover.errorcorrection.R
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.Exception
