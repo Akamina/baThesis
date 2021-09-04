@@ -214,7 +214,7 @@ open class MainActivity : AppCompatActivity() {
 
                     //TESTING
                     var editField = handler.editCheck(recognizedText, this)
-                    if (editField != "continue") {
+                    if (editField != "continue" && editField != "read") {
                         handleEditAppointment(
                             editField,
                             "I did not really get that. What date is the appointment?",
@@ -264,7 +264,7 @@ open class MainActivity : AppCompatActivity() {
                     println(recognizedText) //debug
 
                     var editField = handler.editCheck(recognizedText, this)
-                    if (editField != "continue") {
+                    if (editField != "continue" && editField != "read") {
                         handleEditAppointment(
                             editField,
                             "I did not understand. What time is the appointment?",
@@ -311,7 +311,7 @@ open class MainActivity : AppCompatActivity() {
                     println(recognizedText) //debug
 
                     var editField = handler.editCheck(recognizedText, this)
-                    if (editField != "continue") {
+                    if (editField != "continue" && editField != "read") {
                         handleEditAppointment(
                             editField,
                             "I did not understand. Where does the appointment take place?",
@@ -345,8 +345,9 @@ open class MainActivity : AppCompatActivity() {
                         appntmnt.readData(this)
                         return@registerForActivityResult
                     }
-                    var editField = handler.editCheck(recognizedText, this)
-                    if (editField != "continue") {
+                    //var editField = handler.editCheck(recognizedText, this)
+                    var editField = handler.editCheckEnd(recognizedText, this)
+                    if (editField != "continue" && editField != "read") {
                         handleEditAppointment(
                             editField,
                             "I did not understand that. What field do you want to edit?",
@@ -547,7 +548,7 @@ open class MainActivity : AppCompatActivity() {
                     println(recognizedText) //debug
 
                     var editField = handler.editCheck(recognizedText, this)
-                    if (editField != "continue") {
+                    if (editField != "continue" && editField != "read" && editField != "location") {
                         handleEditReminder(
                             editField,
                             "I didn't understand that correctly. What date should I remind you?",
@@ -598,7 +599,7 @@ open class MainActivity : AppCompatActivity() {
                     println(recognizedText) //debug
 
                     var editField = handler.editCheck(recognizedText, this)
-                    if (editField != "continue") {
+                    if (editField != "continue" && editField != "read" && editField != "location") {
                         handleEditReminder(
                             editField,
                             "I didn't understand that correctly. What time should I remind you?",
@@ -648,8 +649,9 @@ open class MainActivity : AppCompatActivity() {
                         rmdr.readData(this)
                         return@registerForActivityResult
                     }
-                    var editField = handler.editCheck(recognizedText, this)
-                    if (editField != "continue") {
+                    //var editField = handler.editCheck(recognizedText, this)
+                    var editField = handler.editCheckEnd(recognizedText, this)
+                    if (editField != "continue" && editField != "read" && editField != "location") {
                         handleEditReminder(
                             editField,
                             "I did not understand that. What field do you want to edit?",
@@ -1156,7 +1158,6 @@ open class MainActivity : AppCompatActivity() {
             }
 
         val btnSTT = findViewById<Button>(R.id.recordButton)
-        val btnTST = findViewById<Button>(R.id.button)
 
         /**
          * Getting user input and starting decision finding process
@@ -1168,14 +1169,6 @@ open class MainActivity : AppCompatActivity() {
             countDate = 0
             countTime = 0
             countEdit = 0
-        }
-
-        btnTST.setOnClickListener {
-            val sdMain =
-                File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "log")
-            val dest = File(sdMain, "voice_log.txt")
-            textbox.setText(dest.absolutePath)
-            println(dest.absolutePath)
         }
 
     }
@@ -1293,7 +1286,6 @@ open class MainActivity : AppCompatActivity() {
                 errorRequestCode
             )
         } else {
-            //TODO handle "read" case
             appntmnt.setField(field)
             askUser(
                 "What is the new $field?",
@@ -1324,7 +1316,6 @@ open class MainActivity : AppCompatActivity() {
                 errorRequestCode
             )
         } else {
-            //TODO handle "read" case
             rmdr.setField(field)
             askUser(
                 "What is the new $field?",

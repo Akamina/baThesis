@@ -21,7 +21,6 @@ class Logger {
      * @param sender sender of text parameter (User: 1, System: 0)
      */
     internal fun writeLog(text: String, sender: Int, mainActivity: MainActivity) {
-        //TODO use another path
         //val sd_main = File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "test")
         val sdMain =
             File(mainActivity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "log")

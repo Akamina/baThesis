@@ -232,6 +232,7 @@ class IntendHandler {
             ) || text.contains(
                 "örtlichkeit"
             ) || text.contains("Örtlichkeit")
+            || text.contains("place")
         ) return true
 
         return false
@@ -277,16 +278,26 @@ class IntendHandler {
     }
 
     /**
-     * TODO
-     *
-     * @param text
-     * @param mainActivity
-     * @return
+     * This function checks if the user wants to edit a field and if the field exists
+     * @param text User input
+     * @param mainActivity Context
+     * @return "error" for no valid field, the name of the field or "continue" if the user does not want to edit
      */
     internal fun editCheck(text: String, mainActivity: MainActivity): String {
         if (text.contains("edit") || text.contains("Edit")) {
             return getField(text, mainActivity)
         }
         return "continue"
+    }
+
+    /**
+     * This function checks if the user said a field, if no continue is returned
+     * @param text User input
+     * @param mainActivity Context
+     * @return Field name or continue if no field was in the user input
+     */
+    internal fun editCheckEnd(text: String, mainActivity: MainActivity): String {
+        val field = getField(text, mainActivity)
+        return if (field == "error") "continue" else field
     }
 }

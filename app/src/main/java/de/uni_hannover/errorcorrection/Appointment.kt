@@ -34,7 +34,6 @@ class Appointment {
      */
     internal fun createAppointment(mainActivity: MainActivity) {
 
-        //TODO read out appointment in the end and ask if everything is correct
         println("adding event")
 
         try {
@@ -98,8 +97,7 @@ class Appointment {
     }
 
     /**
-     * TODO
-     *
+     * This funcation adds a random error to the appointment
      */
     internal fun addError() {
         //Get random error here
@@ -122,9 +120,8 @@ class Appointment {
     }
 
     /**
-     * TODO
-     *
-     * @param mainActivity
+     * This function reads the gathered data to the user
+     * @param mainActivity Context
      */
     internal fun readData(mainActivity: MainActivity) {
         mainActivity.askUser(
@@ -135,8 +132,7 @@ class Appointment {
     }
 
     /**
-     * TODO
-     *
+     * This function resets the parameters for appointments
      */
     private fun resetParameters() {
         this.location = ""
@@ -159,10 +155,9 @@ class Appointment {
     }
 
     /**
-     * TODO
-     *
-     * @param mainActivity
-     * @param text
+     * This function updates the parameters for this appointment and continues the dialogue
+     * @param mainActivity Context
+     * @param text User input
      */
     internal fun updateParameter(mainActivity: MainActivity, text: String) {
         when (field) {
@@ -227,6 +222,13 @@ class Appointment {
     }
 
 
+    /**
+     * This function calculates the shift of week days when the user says e.g. "monday" as date and updates the date object
+     * @param start Index of current day
+     * @param text User input
+     * @param date Date that will be updated
+     * @return Updated LocalDate object
+     */
     private fun getWeekDayShift(start: Int, text: String, date: LocalDate): LocalDate? {
         var dt = date
         val tmp: Int
@@ -267,9 +269,8 @@ class Appointment {
     }
 
     /**
-     * TODO
-     *
-     * @param text
+     * This function checks if the name of a day was used
+     * @param text User input
      * @return
      */
     private fun containsWeekDay(text: String): Boolean {
@@ -561,7 +562,6 @@ class Appointment {
 
                 println("Updated date $localDateTime")
                 println(localDateTime.toInstant(OffsetDateTime.now().offset).toEpochMilli())
-                //TODO add time from date here to localDateTime
 
                 newEvent.put(
                     CalendarContract.Events.DTSTART,
@@ -577,7 +577,6 @@ class Appointment {
 
             }
             "time" -> {
-                //TODO fix bug where date get set to 1970
                 //get time from event
                 date = getDateFromEvent(mainActivity, event)
                 println("Millis: $date")
@@ -619,7 +618,6 @@ class Appointment {
 
 
             }
-            //TODO bug detected: date was messed up somehow during changing location
         }
     }
 
