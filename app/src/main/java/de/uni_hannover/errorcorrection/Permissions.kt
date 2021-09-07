@@ -12,7 +12,7 @@ class Permissions {
      * @param mainActivity context for permission checking
      */
     internal fun checkPermissions(mainActivity: MainActivity) {
-        val permissions = mutableListOf<String>(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+        val permissions = mutableListOf<String>(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR, Manifest.permission.RECORD_AUDIO)
 
         if (!permissions.all{ActivityCompat.checkSelfPermission(mainActivity, it) == PackageManager.PERMISSION_GRANTED}) {
             ActivityCompat.requestPermissions(mainActivity, permissions.toTypedArray(), 1)
