@@ -9,7 +9,9 @@ import java.util.*
 class STT {
 
     /**
-     * This function
+     * This function creates an STT-intend and launches the desired handler
+     * @param mainActivity Context
+     * @param requestCode Code that signals which ActivityHandler has to be started
      */
     internal fun getUserInput(mainActivity: MainActivity, requestCode: Int) {
         //Create Intent
@@ -23,7 +25,7 @@ class STT {
         sttIntent.putExtra("REQUEST_CODE", requestCode)
 
         mainActivity.setResult(Activity.RESULT_OK, sttIntent)
-        //Start STT activity
+        //Start STT activity according to given request code
         try {
             when (requestCode) {
                 MainActivity.REQUEST_CODE_STT -> {

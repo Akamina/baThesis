@@ -19,16 +19,15 @@ class Reminder {
     private var field: String = ""
     private var reminderID: Long = 0
     private val errorName = mutableListOf("lunch", "dinner", "dentist", "doctor")
-    private val errorDate =
-        mutableListOf("20th of October 2021")//LocalDate.of(2020, 10, 20), LocalDate.of(2021, 10, 2))
-    private val errorTime =
-        mutableListOf("5 a.m.")//LocalTime.of(12, 45), LocalTime.of(11, 33), LocalTime.of(15, 5), LocalTime.of(22, 45))
+    private val errorDate = mutableListOf("20th of October 2021")
+    private val errorTime = mutableListOf("5 a.m.")
 
 
     /**
      * This function creates an reminder event in the calendar and sets up the reminder
      * @param mainActivity Context
      */
+    @Throws(Exception::class)
     internal fun createReminder(mainActivity: MainActivity) {
         println("adding reminder")
 
@@ -37,7 +36,6 @@ class Reminder {
         //Select default calendar
         event.put(CalendarContract.Events.CALENDAR_ID, 1)
 
-        //var dateTime = mainActivity.appntmnt.getDateTimeFromString(reminderDate, reminderTime)
         var dateTime: LocalDateTime
 
         val tm =
@@ -49,7 +47,6 @@ class Reminder {
         event.put(CalendarContract.Events.DTSTART, tm)
         event.put(CalendarContract.Events.DTEND, tm + 3600000) //Duration is 1 hour
         event.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
-        //event.put(CalendarContract.Events.HAS_ALARM, 1)
         event.put(CalendarContract.Events.HAS_ALARM, 1)
 
         println(event)
@@ -60,7 +57,6 @@ class Reminder {
 
         reminderID = mainActivity.appntmnt.listSelectedCalendars(reminderName, mainActivity)
 
-        println("added reminder")
         //Maybe redundant
         dateTime = LocalDateTime.ofInstant(
             Instant.ofEpochMilli(tm),
@@ -76,12 +72,12 @@ class Reminder {
         //Add reminder to event
         mainActivity.contentResolver.insert(Reminders.CONTENT_URI, values)
 
+        mainActivity.logger.writeLog("Added reminder $reminderName on ${dateTime.dayOfMonth}. ${dateTime.month} ${dateTime.year} at ${
+            dateTime.toLocalTime().truncatedTo(ChronoUnit.MINUTES)
+        }", 0, mainActivity)
+
         //Notify user about creation
         mainActivity.askUser(
-            //"Die Erinnerung $reminderName am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${dateTime.hour}:${dateTime.minute} Uhr wurde erstellt.",
-            //  "Die Erinnerung $reminderName am ${dateTime.dayOfMonth}.${dateTime.month} ${dateTime.year} um ${
-            //    dateTime.toLocalTime().truncatedTo(ChronoUnit.MINUTES)
-            //} wurde erstellt.",
             "The reminder $reminderName on ${dateTime.dayOfMonth}. ${dateTime.month} ${dateTime.year} at ${
                 dateTime.toLocalTime().truncatedTo(ChronoUnit.MINUTES)
             } was created.",
@@ -103,7 +99,6 @@ class Reminder {
         //Check for valid eventID
         if (eventID == tmp.toLong()) {
             mainActivity.askUser(
-                //"Die Erinnerung $recognizedText konnte nicht gefunden werden.",
                 "The $recognizedText reminder could not be found.",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_NOTIFY
@@ -117,9 +112,8 @@ class Reminder {
             .withAppendedId(mainActivity.appntmnt.getCalendarUriBase(), eventID)
         iNumRowsDeleted = mainActivity.contentResolver.delete(eventUri, null, null)
 
-        println("Rows deleted: $iNumRowsDeleted")
+        //notify user via tts about deleted reminder
         mainActivity.askUser(
-            //"Die Erinnerung $recognizedText wurde entfernt",
             "The $recognizedText reminder has been removed",
             mainActivity,
             MainActivity.REQUEST_CODE_STT_NOTIFY
@@ -134,7 +128,6 @@ class Reminder {
     fun readReminder(mainActivity: MainActivity, text: String) {
         if (reminderID == 0.toLong()) {
             mainActivity.askUser(
-                //"Die Erinnerung $text konnte nicht gefunden werden",
                 "The reminder $text could not be found",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_NOTIFY
@@ -157,15 +150,12 @@ class Reminder {
 
                 //Get all events with matching name
                 do {
-                    //TODO write this into global variables so it can be moved into a seperate function
-
                     calName = cursor.getString(nameCol)
                     calID = cursor.getString(idCol)
                     calDate = cursor.getString(dateCol)
 
                     if (calID != null && calID.toLong() == reminderID) {
                         break
-                        //result = calID.toLong()
                     }
                 } while (cursor.moveToNext())
                 cursor.close()
@@ -175,9 +165,8 @@ class Reminder {
                         0,
                         OffsetDateTime.now().offset
                     )
-                //mainActivity.askUser("Der Name des Termins lautet $calName und er findet am ${localDate.toLocalDate().dayOfMonth}. ${localDate.toLocalDate().month} ${localDate.toLocalDate().year} um ${localDate.toLocalTime().hour}:${localDate.toLocalTime().minute} Uhr $calLocation statt", mainActivity, MainActivity.REQUEST_CODE_STT_EDIT_APPOINTMENT_FIELD)
+                //read found reminder
                 mainActivity.askUser(
-                    //"Ich erinnere dich am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} an $calName.",
                     "I remind you of ${localDate.toLocalDate()} at ${localDate.toLocalTime().truncatedTo(ChronoUnit.MINUTES)} of $calName.",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_NOTIFY
@@ -197,7 +186,6 @@ class Reminder {
         var tmp = 0
         if (reminderID == tmp.toLong()) {
             mainActivity.askUser(
-                //"Die Erinnerung $recognizedText konnte nicht gefunden werden.",
                 "The $recognizedText reminder could not be found.",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_NOTIFY
@@ -205,7 +193,6 @@ class Reminder {
         } else {
             //Ask for field
             mainActivity.askUser(
-                //"Was soll geändert werden?",
                 "What should be changed?",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_FIELD
@@ -222,8 +209,8 @@ class Reminder {
         field = mainActivity.handler.getField(recognizedText, mainActivity)
         when (field) {
             "error" -> {
+                //invalid user input
                 mainActivity.askUser(
-                    //"Was soll geändert werden?",
                     "What should be changed?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_FIELD
@@ -234,7 +221,6 @@ class Reminder {
             }
             else -> {
                 mainActivity.askUser(
-                    //"Wie lautet die Änderung?",
                     "What's the change?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_NEW
@@ -249,7 +235,6 @@ class Reminder {
      * @param mainActivity Context
      */
     fun editReminder(text: String, mainActivity: MainActivity) {
-        //TODO check name, time and date in console maybe have to fix some bugs
         var event = mainActivity.appntmnt.getCalendarUriBase()
         var newEvent = ContentValues()
         var updateUri = ContentUris.withAppendedId(event, reminderID)
@@ -260,14 +245,12 @@ class Reminder {
                 newEvent.put(CalendarContract.Events.TITLE, text)
                 mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
-                    //"Ich habe den Namen auf $text geändert. Möchtest du noch etwas ändern?",
                     "I changed the name to $text. Would you like to change anything else?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_ASK
                 )
             }
             "date" -> {
-                //TODO add time from date here to localDateTime
                 //get date from event
                 date = mainActivity.appntmnt.getDateFromEvent(mainActivity, event)
                 //Calculate into LocalDateTime from millis
@@ -285,7 +268,6 @@ class Reminder {
                 )
                 mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
-                    //"Ich habe das Datum auf $localDate geändert. Möchtest du noch etwas ändern?",
                     "I changed the date to $localDate. Would you like to change anything else?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_ASK
@@ -293,7 +275,6 @@ class Reminder {
 
             }
             "time" -> {
-                //TODO wenn zeit gesetzt wird, wird das datum auf 1970 gesetzt
                 //get time from event
                 date = mainActivity.appntmnt.getDateFromEvent(mainActivity, event)
 
@@ -311,7 +292,6 @@ class Reminder {
                 )
                 mainActivity.contentResolver.update(updateUri, newEvent, null, null)
                 mainActivity.askUser(
-                    //"Ich habe die Zeit auf $localTime geändert. Möchtest du noch etwas ändern?",
                     "I changed the time to $localTime. Would you like to change anything?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_ASK
@@ -319,7 +299,7 @@ class Reminder {
 
             }
             else -> {
-                //TODO add notify for invalid field
+                //abort dialogue
 
             }
         }
@@ -330,10 +310,8 @@ class Reminder {
      * @param mainActivity Context
      */
     fun readReminderEdit(mainActivity: MainActivity) {
-        println("lies die erinnerung beim bearbeiten")
         if (reminderID == 0.toLong()) {
             mainActivity.askUser(
-                //"Wie lautet der Name der Erinnerung den ich vorlesen soll?",
                 "What is the name of the memory that I should read?",
                 mainActivity,
                 MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_READ
@@ -356,7 +334,6 @@ class Reminder {
 
                 //Get all events with matching name
                 do {
-                    //TODO write this into global variables so it can be moved into a seperate function
 
                     calName = cursor.getString(nameCol)
                     calID = cursor.getString(idCol)
@@ -374,7 +351,6 @@ class Reminder {
                         OffsetDateTime.now().offset
                     )
                 mainActivity.askUser(
-                    //"Ich erinnere dich am ${localDate.toLocalDate()} um ${localDate.toLocalTime()} an $calName. Möchtest du noch etwas ändern?",
                     "I remind you of ${localDate.toLocalDate()} at ${localDate.toLocalTime().truncatedTo(ChronoUnit.MINUTES)} of $calName. Would you like to change something?",
                     mainActivity,
                     MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_FIELD
@@ -383,6 +359,11 @@ class Reminder {
         }
     }
 
+    /**
+     * this function updates parameters of this object
+     * @param mainActivity context
+     * @param text updated field
+     */
     internal fun updateParameter(mainActivity: MainActivity, text: String) {
         when (field) {
             "name" -> {
@@ -395,6 +376,7 @@ class Reminder {
                 this.reminderTime = text
             }
             "location" -> {
+                //no location for reminders
                 mainActivity.askUser("There is no field named location for a reminder. Do you want do edit something?", mainActivity, MainActivity.REQUEST_CODE_STT_APPOINTMENT_EDIT_CREATION_END)
                 return
             }
@@ -403,6 +385,7 @@ class Reminder {
                 return
             }
         }
+        //check where to continue if edit during early creation
         if (this.reminderDate == "") {
             mainActivity.askUser(
                 "What date is the appointment?",
@@ -419,38 +402,62 @@ class Reminder {
             )
             return
         }
+        //edit during late creation after all fields are set
         mainActivity.askUser("I have updated $field to $text. Do you wish to edit something else?", mainActivity, MainActivity.REQUEST_CODE_STT_REMINDER_EDIT_CREATION_END)
     }
 
 
+    /**
+     * setter function for name
+     * @param recognizedText new name
+     */
     fun setName(recognizedText: String) {
         this.reminderName = recognizedText
     }
 
+    /**
+     * setter for time
+     * @param recognizedText new time
+     */
     fun setTime(recognizedText: String) {
         this.reminderTime = recognizedText
     }
 
+    /**
+     * setter for date
+     * @param recognizedText new date
+     */
     fun setDate(recognizedText: String) {
         this.reminderDate = recognizedText
     }
 
+    /**
+     * setter for id
+     * @param listSelectedCalendars new event id
+     */
     fun setEvent(listSelectedCalendars: Long) {
         this.reminderID = listSelectedCalendars
     }
 
+    /**
+     * getter for current field
+     * @return current field
+     */
     fun getField(): String {
         return this.field
     }
 
+    /**
+     * setter for current field
+     * @param text new field
+     */
     fun setField(text: String) {
         this.field = text
     }
 
     /**
-     * TODO
-     *
-     * @param mainActivity
+     * this function reads saved parameters for this reminder
+     * @param mainActivity context
      */
     fun readData(mainActivity: MainActivity) {
         mainActivity.askUser(
@@ -462,8 +469,7 @@ class Reminder {
     }
 
     /**
-     * TODO
-     *
+     * this function resets parameters of this object
      */
     private fun resetParameters() {
         this.reminderName = ""
@@ -472,13 +478,14 @@ class Reminder {
     }
 
     /**
-     * TODO
-     *
+     * this function adds a random error to this object
      */
     internal fun addError() {
+        //get error
         var rng = Random
         println(rng.nextInt(1))
-        var index = rng.nextInt(4)
+        var index = rng.nextInt(3)
+        //set error
         when (index) {
             0 -> {
                 reminderName = errorName[rng.nextInt(errorName.size)]
@@ -490,6 +497,21 @@ class Reminder {
                 reminderTime = errorTime[rng.nextInt(errorTime.size)]
 
             }
+        }
+    }
+
+    /**
+     * This function checks for valid date and time formats for reminders
+     * @param text User input
+     * @param mainActivity Context
+     */
+    internal fun checkDateAndTimeValidity(text: String, mainActivity: MainActivity) {
+        //check for field and parses date or time if field matches
+        if (this.field == "date") {
+            mainActivity.appntmnt.parseLocalDate(text)
+        }
+        if (this.field == "time") {
+            mainActivity.appntmnt.parseLocalTime(text)
         }
     }
 
