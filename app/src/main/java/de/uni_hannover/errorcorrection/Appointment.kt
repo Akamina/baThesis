@@ -219,7 +219,7 @@ class Appointment {
     private fun getWeekDayShift(start: Int, text: String, date: LocalDate): LocalDate? {
         var dt = date
         val tmp: Int
-        //target day - current day, if value is < 0 add 6, if value = 0 add 7, else add result
+        //target day - current day, if value is < 0 add 7 + result, if value = 0 add 7, else add result
         //set value according to day
         when {
             text.lowercase().contains("monday") -> {
@@ -253,7 +253,7 @@ class Appointment {
         }
         //calculate shift
         val result = tmp - start
-        return if (result < 0) dt.plusDays(6) else if (result == 0) dt.plusDays(7) else dt.plusDays(
+        return if (result < 0) dt.plusDays((7 + result).toLong()) else if (result == 0) dt.plusDays(7) else dt.plusDays(
             result.toLong()
         )
     }
